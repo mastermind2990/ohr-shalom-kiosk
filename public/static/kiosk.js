@@ -22,6 +22,9 @@ class OhrShalomKiosk {
     }
     
     async init() {
+        // Load saved configuration first
+        this.loadConfigurationFromStorage()
+        
         // Initialize Stripe
         this.stripe = Stripe(this.config.stripePublishableKey)
         
@@ -41,9 +44,23 @@ class OhrShalomKiosk {
         this.setupEventListeners()
         this.loadHebrewCalendar()
         this.updateDateTime()
+        this.updatePrayerTimesDisplay()
         
         // Update time every minute
         setInterval(() => this.updateDateTime(), 60000)
+    }
+    
+    loadConfigurationFromStorage() {
+        const saved = localStorage.getItem('ohrShalomKioskConfig')
+        if (saved) {
+            try {
+                const savedConfig = JSON.parse(saved)
+                this.config = { ...this.config, ...savedConfig }
+                console.log('Loaded saved configuration:', this.config)
+            } catch (error) {
+                console.error('Error loading saved configuration:', error)
+            }
+        }
     }
     
     setupEventListeners() {
@@ -547,59 +564,240 @@ class OhrShalomKiosk {
     }
     
     showAdminConfig() {
-        // Create admin configuration modal
+        // Create comprehensive admin configuration modal
         const modal = document.createElement('div')
         modal.id = 'adminConfigModal'
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center'
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center overflow-y-auto'
         modal.innerHTML = `
-            <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
-                <h3 class="text-xl font-bold mb-4">Admin Configuration</h3>
+            <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 my-8">
+                <h3 class="text-2xl font-bold mb-6">Admin Configuration</h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <h4 class="font-semibold text-gray-800 mb-2">System Status</h4>
-                        <div class="text-sm space-y-1">
-                            <div>Selected Amount: $${this.selectedAmount.toFixed(2)}</div>
-                            <div>Stripe Mode: Test</div>
-                            <div>Terminal Ready: ${this.terminal ? 'Yes' : 'No'}</div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Location Settings -->
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">Location Settings</h4>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Location Method</label>
+                            <select id="locationMethod" class="w-full p-2 border border-gray-300 rounded-lg">
+                                <option value="coordinates">Latitude/Longitude</option>
+                                <option value="geoname">Hebcal Geoname ID</option>
+                            </select>
+                        </div>
+                        
+                        <div id="coordinatesSection">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                                    <input type="number" id="latitude" step="0.0001" class="w-full p-2 border border-gray-300 rounded-lg" value="${this.config.latitude}" placeholder="28.5383">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                                    <input type="number" id="longitude" step="0.0001" class="w-full p-2 border border-gray-300 rounded-lg" value="${this.config.longitude}" placeholder="-81.3792">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="geonameSection" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Hebcal Geoname ID</label>
+                            <input type="number" id="geonameId" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="4167147 (Orlando, FL)">
+                            <div class="text-xs text-gray-500 mt-1">
+                                Find your city ID at <a href="https://hebcal.com/home/195/jewish-calendar-rest-api#cities" target="_blank" class="text-blue-600">hebcal.com</a>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+                            <select id="timezone" class="w-full p-2 border border-gray-300 rounded-lg">
+                                <option value="America/New_York" ${this.config.timeZone === 'America/New_York' ? 'selected' : ''}>Eastern Time</option>
+                                <option value="America/Chicago" ${this.config.timeZone === 'America/Chicago' ? 'selected' : ''}>Central Time</option>
+                                <option value="America/Denver" ${this.config.timeZone === 'America/Denver' ? 'selected' : ''}>Mountain Time</option>
+                                <option value="America/Los_Angeles" ${this.config.timeZone === 'America/Los_Angeles' ? 'selected' : ''}>Pacific Time</option>
+                                <option value="America/Anchorage" ${this.config.timeZone === 'America/Anchorage' ? 'selected' : ''}>Alaska Time</option>
+                                <option value="Pacific/Honolulu" ${this.config.timeZone === 'Pacific/Honolulu' ? 'selected' : ''}>Hawaii Time</option>
+                            </select>
                         </div>
                     </div>
                     
-                    <div>
-                        <h4 class="font-semibold text-gray-800 mb-2">Configuration</h4>
-                        <div class="text-sm space-y-1">
-                            <div>Location: ${this.config.latitude}, ${this.config.longitude}</div>
-                            <div>Timezone: ${this.config.timeZone}</div>
-                            <div>Admin PIN: ${this.config.adminPin}</div>
+                    <!-- Prayer Times Settings -->
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">Prayer Times</h4>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Shacharit (Morning)</label>
+                            <input type="time" id="shacharitTime" class="w-full p-2 border border-gray-300 rounded-lg" value="07:00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mincha (Afternoon)</label>
+                            <input type="time" id="minchaTime" class="w-full p-2 border border-gray-300 rounded-lg" value="14:00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Maariv (Evening)</label>
+                            <input type="time" id="maarivTime" class="w-full p-2 border border-gray-300 rounded-lg" value="20:00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
+                            <input type="text" id="organizationName" class="w-full p-2 border border-gray-300 rounded-lg" value="Ohr Shalom" placeholder="Your synagogue name">
+                        </div>
+                    </div>
+                    
+                    <!-- Security Settings -->
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">Security Settings</h4>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Admin PIN</label>
+                            <input type="password" id="adminPin" class="w-full p-2 border border-gray-300 rounded-lg" value="${this.config.adminPin}" placeholder="Enter 4-6 digit PIN">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Stripe Publishable Key</label>
+                            <input type="text" id="stripePublishableKey" class="w-full p-2 border border-gray-300 rounded-lg text-sm" value="${this.config.stripePublishableKey}" placeholder="pk_live_...">
+                            <div class="text-xs text-gray-500 mt-1">Get from Stripe Dashboard → Developers → API keys</div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Status -->
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">System Status</h4>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                            <div><strong>Selected Amount:</strong> $${this.selectedAmount.toFixed(2)}</div>
+                            <div><strong>Stripe Mode:</strong> ${this.config.stripePublishableKey.includes('test') ? 'Test' : 'Live'}</div>
+                            <div><strong>Terminal Ready:</strong> ${this.terminal ? 'Yes' : 'No'}</div>
+                            <div><strong>Current Location:</strong> ${this.config.latitude}, ${this.config.longitude}</div>
+                            <div><strong>Timezone:</strong> ${this.config.timeZone}</div>
+                        </div>
+                        
+                        <div>
+                            <h5 class="font-medium text-gray-800 mb-2">Quick Actions</h5>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="testPayment" class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">Test Payment ($5)</button>
+                                <button id="testCamera" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-sm">Test Camera</button>
+                                <button id="refreshCalendar" class="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm">Refresh Calendar</button>
+                                <button id="enterKiosk" class="px-3 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 text-sm">Kiosk Mode</button>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="mt-6">
-                    <h4 class="font-semibold text-gray-800 mb-2">Actions</h4>
-                    <div class="flex flex-wrap gap-2">
-                        <button id="testPayment" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Test Payment</button>
-                        <button id="testCamera" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Test Camera</button>
-                        <button id="refreshCalendar" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">Refresh Calendar</button>
-                        <button id="enterKiosk" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">Kiosk Mode</button>
+                <div class="flex justify-between items-center mt-8 pt-6 border-t">
+                    <div class="text-sm text-gray-500">
+                        Changes are saved automatically to browser storage
                     </div>
-                </div>
-                
-                <div class="flex space-x-4 mt-6">
-                    <button id="adminConfigClose" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg">Close</button>
+                    <div class="flex space-x-4">
+                        <button id="resetDefaults" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg">Reset to Defaults</button>
+                        <button id="saveConfig" class="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg">Save Changes</button>
+                        <button id="adminConfigClose" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">Close</button>
+                    </div>
                 </div>
             </div>
         `
         
         document.body.appendChild(modal)
         
+        // Load saved configuration
+        this.loadSavedConfig()
+        
         // Add event listeners
+        this.setupAdminEventListeners(modal)
+    }
+    
+    loadSavedConfig() {
+        // Load configuration from localStorage
+        const saved = localStorage.getItem('ohrShalomKioskConfig')
+        if (saved) {
+            try {
+                const config = JSON.parse(saved)
+                this.config = { ...this.config, ...config }
+                
+                // Update form fields
+                document.getElementById('latitude').value = this.config.latitude || 28.5383
+                document.getElementById('longitude').value = this.config.longitude || -81.3792
+                document.getElementById('timezone').value = this.config.timeZone || 'America/New_York'
+                document.getElementById('adminPin').value = this.config.adminPin || '12345'
+                document.getElementById('organizationName').value = this.config.organizationName || 'Ohr Shalom'
+                
+                // Update prayer times
+                if (this.config.shacharit) {
+                    const time = this.parseTimeToInput(this.config.shacharit)
+                    document.getElementById('shacharitTime').value = time
+                }
+                if (this.config.mincha) {
+                    const time = this.parseTimeToInput(this.config.mincha)
+                    document.getElementById('minchaTime').value = time
+                }
+                if (this.config.maariv) {
+                    const time = this.parseTimeToInput(this.config.maariv)
+                    document.getElementById('maarivTime').value = time
+                }
+                
+                if (this.config.geonameId) {
+                    document.getElementById('locationMethod').value = 'geoname'
+                    document.getElementById('geonameId').value = this.config.geonameId
+                    this.toggleLocationMethod('geoname')
+                }
+            } catch (error) {
+                console.error('Error loading saved config:', error)
+            }
+        }
+    }
+    
+    parseTimeToInput(timeString) {
+        // Convert "7:00 AM" to "07:00" format
+        const match = timeString.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i)
+        if (match) {
+            let hours = parseInt(match[1])
+            const minutes = match[2]
+            const period = match[3].toUpperCase()
+            
+            if (period === 'PM' && hours !== 12) hours += 12
+            if (period === 'AM' && hours === 12) hours = 0
+            
+            return `${hours.toString().padStart(2, '0')}:${minutes}`
+        }
+        return timeString
+    }
+    
+    setupAdminEventListeners(modal) {
+        // Location method toggle
+        document.getElementById('locationMethod').addEventListener('change', (e) => {
+            this.toggleLocationMethod(e.target.value)
+        })
+        
+        // Save configuration
+        document.getElementById('saveConfig').addEventListener('click', () => {
+            this.saveConfiguration()
+        })
+        
+        // Reset to defaults
+        document.getElementById('resetDefaults').addEventListener('click', () => {
+            if (confirm('Reset all settings to defaults? This cannot be undone.')) {
+                localStorage.removeItem('ohrShalomKioskConfig')
+                this.config = {
+                    stripePublishableKey: 'pk_live_51PK1IqLaU6gfF6P3agZ2KfGWMsqnQctB9y7maYu97zUqelsSBE0UKr6RtMSK2DvBLnwkFIPlJOb6M9IN3RUDQvgN00esYwFgBi',
+                    adminPin: '12345',
+                    latitude: 28.5383,
+                    longitude: -81.3792,
+                    timeZone: 'America/New_York'
+                }
+                this.showMessage('Settings reset to defaults', 'success')
+                document.body.removeChild(modal)
+                setTimeout(() => location.reload(), 1000)
+            }
+        })
+        
+        // Close modal
         document.getElementById('adminConfigClose').addEventListener('click', () => {
             document.body.removeChild(modal)
         })
         
+        // Quick action buttons
         document.getElementById('testPayment').addEventListener('click', () => {
-            this.setAmount(5) // Set $5 for testing
+            this.setAmount(5)
             this.showMessage('Test amount set to $5', 'info')
         })
         
@@ -617,6 +815,75 @@ class OhrShalomKiosk {
             document.body.removeChild(modal)
             this.showMessage('Entering kiosk mode', 'info')
         })
+    }
+    
+    toggleLocationMethod(method) {
+        const coordSection = document.getElementById('coordinatesSection')
+        const geonameSection = document.getElementById('geonameSection')
+        
+        if (method === 'geoname') {
+            coordSection.classList.add('hidden')
+            geonameSection.classList.remove('hidden')
+        } else {
+            coordSection.classList.remove('hidden')
+            geonameSection.classList.add('hidden')
+        }
+    }
+    
+    saveConfiguration() {
+        try {
+            // Collect all form data
+            const newConfig = {
+                latitude: parseFloat(document.getElementById('latitude').value) || this.config.latitude,
+                longitude: parseFloat(document.getElementById('longitude').value) || this.config.longitude,
+                timeZone: document.getElementById('timezone').value || this.config.timeZone,
+                adminPin: document.getElementById('adminPin').value || this.config.adminPin,
+                organizationName: document.getElementById('organizationName').value || 'Ohr Shalom',
+                stripePublishableKey: document.getElementById('stripePublishableKey').value || this.config.stripePublishableKey,
+                geonameId: document.getElementById('geonameId').value ? parseInt(document.getElementById('geonameId').value) : null,
+                locationMethod: document.getElementById('locationMethod').value,
+                shacharit: this.formatTimeFromInput(document.getElementById('shacharitTime').value),
+                mincha: this.formatTimeFromInput(document.getElementById('minchaTime').value),
+                maariv: this.formatTimeFromInput(document.getElementById('maarivTime').value)
+            }
+            
+            // Update current config
+            this.config = { ...this.config, ...newConfig }
+            
+            // Save to localStorage
+            localStorage.setItem('ohrShalomKioskConfig', JSON.stringify(newConfig))
+            
+            // Update display
+            this.updatePrayerTimesDisplay()
+            this.loadHebrewCalendar()
+            
+            this.showMessage('Configuration saved successfully!', 'success')
+            
+            // Close modal after short delay
+            setTimeout(() => {
+                const modal = document.getElementById('adminConfigModal')
+                if (modal) document.body.removeChild(modal)
+            }, 1500)
+            
+        } catch (error) {
+            console.error('Error saving configuration:', error)
+            this.showMessage('Error saving configuration: ' + error.message, 'error')
+        }
+    }
+    
+    formatTimeFromInput(timeInput) {
+        // Convert "07:00" to "7:00 AM" format
+        const [hours, minutes] = timeInput.split(':')
+        const hourNum = parseInt(hours)
+        const period = hourNum >= 12 ? 'PM' : 'AM'
+        const displayHour = hourNum === 0 ? 12 : hourNum > 12 ? hourNum - 12 : hourNum
+        return `${displayHour}:${minutes} ${period}`
+    }
+    
+    updatePrayerTimesDisplay() {
+        document.getElementById('shacharit').textContent = `Shacharit: ${this.config.shacharit || '7:00 AM'}`
+        document.getElementById('mincha').textContent = `Mincha: ${this.config.mincha || '2:00 PM'}`
+        document.getElementById('maariv').textContent = `Maariv: ${this.config.maariv || '8:00 PM'}`
     }
     
     showCustomAmountModal() {
@@ -642,7 +909,15 @@ class OhrShalomKiosk {
     
     async loadHebrewCalendar() {
         try {
-            const response = await fetch(`/api/hebcal?lat=${this.config.latitude}&lon=${this.config.longitude}`)
+            let url = '/api/hebcal?'
+            
+            if (this.config.geonameId && this.config.locationMethod === 'geoname') {
+                url += `geonameid=${this.config.geonameId}`
+            } else {
+                url += `lat=${this.config.latitude}&lon=${this.config.longitude}`
+            }
+            
+            const response = await fetch(url)
             const data = await response.json()
             
             this.displayHebrewCalendar(data)
