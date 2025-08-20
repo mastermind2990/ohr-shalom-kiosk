@@ -210,11 +210,13 @@ app.get('/', (c) => {
                 <!-- Header with Logo -->
                 <div class="text-center mb-6">
                     <div id="logoContainer" class="cursor-pointer inline-block">
-                        <div class="w-64 h-20 mx-auto bg-white rounded-lg shadow-lg flex items-center justify-center border-2 border-blue-200">
-                            <h1 class="text-2xl font-bold text-blue-800">
-                                <i class="fas fa-star-of-david mr-2"></i>
-                                אור שלום
-                            </h1>
+                        <div class="w-80 h-24 mx-auto bg-white rounded-lg shadow-lg flex items-center justify-center border-2 border-blue-200 p-3">
+                            <img 
+                                src="https://page.gensparksite.com/v1/base64_upload/631746a4b12d2a62da1d62a6ed2986c6Ok" 
+                                alt="Ohr Shalom" 
+                                class="max-w-full max-h-full object-contain"
+                                style="filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));"
+                            />
                         </div>
                     </div>
                     <p class="text-sm text-gray-600 mt-2">Tap logo 5× for admin</p>

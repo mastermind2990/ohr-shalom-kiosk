@@ -642,6 +642,12 @@ class OhrShalomKiosk {
                             <label class="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
                             <input type="text" id="organizationName" class="w-full p-2 border border-gray-300 rounded-lg" value="Ohr Shalom" placeholder="Your synagogue name">
                         </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Logo URL (optional)</label>
+                            <input type="url" id="logoUrl" class="w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="https://example.com/logo.png">
+                            <div class="text-xs text-gray-500 mt-1">Leave blank to use default text logo</div>
+                        </div>
                     </div>
                     
                     <!-- Security Settings -->
@@ -839,6 +845,7 @@ class OhrShalomKiosk {
                 timeZone: document.getElementById('timezone').value || this.config.timeZone,
                 adminPin: document.getElementById('adminPin').value || this.config.adminPin,
                 organizationName: document.getElementById('organizationName').value || 'Ohr Shalom',
+                logoUrl: document.getElementById('logoUrl').value || this.config.logoUrl,
                 stripePublishableKey: document.getElementById('stripePublishableKey').value || this.config.stripePublishableKey,
                 geonameId: document.getElementById('geonameId').value ? parseInt(document.getElementById('geonameId').value) : null,
                 locationMethod: document.getElementById('locationMethod').value,
