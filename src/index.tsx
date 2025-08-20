@@ -202,6 +202,16 @@ app.get('/', (c) => {
                 direction: rtl;
                 text-align: right;
             }
+            
+            /* Hebrew text left-aligned (for mixed content) */
+            .hebrew-left {
+                font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;
+                direction: ltr;
+                text-align: left;
+            }
+            
+            /* Enhanced Hebrew font loading */
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;500;600;700&display=swap');
         </style>
     </head>
     <body class="bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -224,28 +234,67 @@ app.get('/', (c) => {
 
                 <!-- Date and Calendar Information -->
                 <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Date Information -->
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-3">
-                                <i class="fas fa-calendar mr-2"></i>Today
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-calendar mr-2"></i>Today's Date
                             </h3>
-                            <div id="dateInfo" class="space-y-2 text-gray-700">
-                                <div id="gregorianDate"></div>
-                                <div id="hebrewDate" class="hebrew-text"></div>
-                                <div id="parsha" class="hebrew-text font-bold text-blue-800"></div>
+                            <div id="dateInfo" class="space-y-3">
+                                <!-- English Date -->
+                                <div id="gregorianDate" class="text-lg font-medium text-gray-800"></div>
+                                
+                                <!-- Hebrew Date -->
+                                <div id="hebrewDate" class="text-lg font-medium text-gray-700 text-left" 
+                                     style="direction: ltr; text-align: left; font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
+                                
+                                <!-- Parsha of the Week -->
+                                <div class="mt-4 pt-3 border-t border-gray-200">
+                                    <div class="text-sm font-medium text-gray-600 mb-1">Parashat HaShavua</div>
+                                    <div id="parsha" class="text-2xl font-bold text-blue-800 text-left leading-relaxed" 
+                                         style="direction: ltr; text-align: left; font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
+                                </div>
                             </div>
                         </div>
+                        
+                        <!-- Times Information -->
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-3">
-                                <i class="fas fa-clock mr-2"></i>Times
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-clock mr-2"></i>Zmanim & Prayer Times
                             </h3>
-                            <div id="timesInfo" class="space-y-2 text-gray-700">
-                                <div id="candleLighting"></div>
-                                <div id="havdalah"></div>
-                                <div class="border-t pt-2 mt-2">
-                                    <div id="shacharit">Shacharit: 7:00 AM</div>
-                                    <div id="mincha">Mincha: 2:00 PM</div>
-                                    <div id="maariv">Maariv: 8:00 PM</div>
+                            <div id="timesInfo" class="space-y-3">
+                                <!-- Shabbat Times -->
+                                <div class="bg-blue-50 p-3 rounded-lg">
+                                    <h4 class="text-sm font-semibold text-blue-800 mb-2">Shabbat Times</h4>
+                                    <div class="space-y-1 text-sm">
+                                        <div id="candleLighting" class="flex items-center">
+                                            <i class="fas fa-candle-holder w-4 text-yellow-600 mr-2"></i>
+                                            <span class="text-gray-700">Loading...</span>
+                                        </div>
+                                        <div id="havdalah" class="flex items-center">
+                                            <i class="fas fa-wine-glass w-4 text-purple-600 mr-2"></i>
+                                            <span class="text-gray-700">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Daily Prayer Times -->
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <h4 class="text-sm font-semibold text-green-800 mb-2">Daily Prayers</h4>
+                                    <div class="space-y-1 text-sm">
+                                        <div id="shacharit" class="flex items-center">
+                                            <i class="fas fa-sun w-4 text-yellow-500 mr-2"></i>
+                                            <span class="text-gray-700">Shacharit: 7:00 AM</span>
+                                        </div>
+                                        <div id="mincha" class="flex items-center">
+                                            <i class="fas fa-sun w-4 text-orange-500 mr-2"></i>
+                                            <span class="text-gray-700">Mincha: 2:00 PM</span>
+                                        </div>
+                                        <div id="maariv" class="flex items-center">
+                                            <i class="fas fa-moon w-4 text-indigo-500 mr-2"></i>
+                                            <span class="text-gray-700">Maariv: 8:00 PM</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

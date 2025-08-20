@@ -888,9 +888,32 @@ class OhrShalomKiosk {
     }
     
     updatePrayerTimesDisplay() {
-        document.getElementById('shacharit').textContent = `Shacharit: ${this.config.shacharit || '7:00 AM'}`
-        document.getElementById('mincha').textContent = `Mincha: ${this.config.mincha || '2:00 PM'}`
-        document.getElementById('maariv').textContent = `Maariv: ${this.config.maariv || '8:00 PM'}`
+        // Update Shacharit
+        const shacharitElement = document.getElementById('shacharit')
+        if (shacharitElement) {
+            const span = shacharitElement.querySelector('span')
+            if (span) {
+                span.textContent = `Shacharit: ${this.config.shacharit || '7:00 AM'}`
+            }
+        }
+        
+        // Update Mincha
+        const minchaElement = document.getElementById('mincha')
+        if (minchaElement) {
+            const span = minchaElement.querySelector('span')
+            if (span) {
+                span.textContent = `Mincha: ${this.config.mincha || '2:00 PM'}`
+            }
+        }
+        
+        // Update Maariv
+        const maarivElement = document.getElementById('maariv')
+        if (maarivElement) {
+            const span = maarivElement.querySelector('span')
+            if (span) {
+                span.textContent = `Maariv: ${this.config.maariv || '8:00 PM'}`
+            }
+        }
     }
     
     showCustomAmountModal() {
@@ -936,16 +959,24 @@ class OhrShalomKiosk {
     displayHebrewCalendar(data) {
         const items = data.items || []
         
+        // Find Hebrew date - look for items with hdate field or that are clearly dates
+        const hebrewDateItem = items.find(item => 
+            item.hdate || (item.hebrew && !item.category && item.date)
+        )
+        if (hebrewDateItem) {
+            const hebrewDateText = hebrewDateItem.hdate || hebrewDateItem.hebrew || ''
+            document.getElementById('hebrewDate').textContent = hebrewDateText
+        }
+        
         // Find parsha
         const parsha = items.find(item => item.category === 'parashat')
         if (parsha && parsha.hebrew) {
             document.getElementById('parsha').textContent = parsha.hebrew
-        }
-        
-        // Find Hebrew date
-        const hebrewDate = items.find(item => item.hebrew && !item.category)
-        if (hebrewDate) {
-            document.getElementById('hebrewDate').textContent = hebrewDate.hebrew
+        } else {
+            // If no Hebrew parsha found, try the English title
+            if (parsha && parsha.title) {
+                document.getElementById('parsha').textContent = parsha.title
+            }
         }
         
         // Find candle lighting
@@ -953,8 +984,23 @@ class OhrShalomKiosk {
             item.title && item.title.toLowerCase().includes('candle')
         )
         if (candles) {
-            document.getElementById('candleLighting').innerHTML = 
-                `<i class="fas fa-candle-holder mr-1"></i>${candles.title}`
+            const candleElement = document.getElementById('candleLighting')
+            if (candleElement) {
+                const span = candleElement.querySelector('span')
+                if (span) {
+                    span.textContent = candles.title
+                } else {
+                    candleElement.innerHTML = `<i class="fas fa-candle-holder w-4 text-yellow-600 mr-2"></i><span class="text-gray-700">${candles.title}</span>`
+                }
+            }
+        } else {
+            const candleElement = document.getElementById('candleLighting')
+            if (candleElement) {
+                const span = candleElement.querySelector('span')
+                if (span) {
+                    span.textContent = 'No candle lighting this week'
+                }
+            }
         }
         
         // Find Havdalah
@@ -962,8 +1008,23 @@ class OhrShalomKiosk {
             item.title && item.title.toLowerCase().includes('havdalah')
         )
         if (havdalah) {
-            document.getElementById('havdalah').innerHTML = 
-                `<i class="fas fa-wine-glass mr-1"></i>${havdalah.title}`
+            const havdalahElement = document.getElementById('havdalah')
+            if (havdalahElement) {
+                const span = havdalahElement.querySelector('span')
+                if (span) {
+                    span.textContent = havdalah.title
+                } else {
+                    havdalahElement.innerHTML = `<i class="fas fa-wine-glass w-4 text-purple-600 mr-2"></i><span class="text-gray-700">${havdalah.title}</span>`
+                }
+            }
+        } else {
+            const havdalahElement = document.getElementById('havdalah')
+            if (havdalahElement) {
+                const span = havdalahElement.querySelector('span')
+                if (span) {
+                    span.textContent = 'No Havdalah this week'
+                }
+            }
         }
     }
     
