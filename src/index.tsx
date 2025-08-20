@@ -139,7 +139,7 @@ app.get('/', (c) => {
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <script src="https://js.stripe.com/v3/"></script>
         <style>
-            /* Kiosk optimizations */
+            /* Kiosk optimizations for landscape tablets */
             html, body {
                 height: 100vh;
                 overflow: hidden;
@@ -161,6 +161,36 @@ app.get('/', (c) => {
                 -moz-user-select: text;
                 -ms-user-select: text;
                 user-select: text;
+            }
+            
+            /* Landscape tablet optimizations */
+            @media (orientation: landscape) and (min-width: 768px) {
+                .landscape-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 1.5rem;
+                    height: calc(100vh - 2rem);
+                }
+                
+                .landscape-left {
+                    overflow-y: auto;
+                    padding-right: 1rem;
+                }
+                
+                .landscape-right {
+                    overflow-y: auto;
+                    padding-left: 1rem;
+                }
+                
+                .amount-button {
+                    min-height: 70px;
+                    font-size: 20px;
+                }
+                
+                .kiosk-button {
+                    min-height: 55px;
+                    font-size: 16px;
+                }
             }
             
             /* Tablet optimized buttons */
@@ -212,193 +242,302 @@ app.get('/', (c) => {
             
             /* Enhanced Hebrew font loading */
             @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;500;600;700&display=swap');
+            
+            /* Zmanim table styling */
+            .zmanim-table {
+                font-size: 0.85rem;
+                line-height: 1.4;
+            }
+            
+            .zmanim-table td {
+                padding: 0.25rem 0.5rem;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .zmanim-table tr:last-child td {
+                border-bottom: none;
+            }
         </style>
     </head>
     <body class="bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div class="min-h-screen p-4 scroll-container overflow-y-auto">
-            <div class="max-w-4xl mx-auto">
-                <!-- Header with Logo -->
-                <div class="text-center mb-6">
-                    <div id="logoContainer" class="cursor-pointer inline-block">
-                        <div class="w-80 h-24 mx-auto bg-white rounded-lg shadow-lg flex items-center justify-center border-2 border-blue-200 p-3">
-                            <img 
-                                src="https://page.gensparksite.com/v1/base64_upload/631746a4b12d2a62da1d62a6ed2986c6Ok" 
-                                alt="Ohr Shalom" 
-                                class="max-w-full max-h-full object-contain"
-                                style="filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));"
-                            />
+        <div class="min-h-screen p-4">
+            <!-- Header with Logo -->
+            <div class="text-center mb-4">
+                <div id="logoContainer" class="cursor-pointer inline-block">
+                    <div class="w-80 h-20 mx-auto bg-white rounded-lg shadow-lg flex items-center justify-center border-2 border-blue-200 p-3">
+                        <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600" 
+                            style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3); font-family: 'Times New Roman', serif;">
+                            ✡ OHR SHALOM ✡
+                        </h1>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-600 mt-1">Tap logo 5× for admin</p>
+            </div>
+            
+            <!-- Main Content Grid for Landscape -->
+            <div class="landscape-grid">
+                <!-- Left Column: Times and Calendar -->
+                <div class="landscape-left scroll-container">
+
+                    <!-- Date and Calendar Information -->
+                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-calendar mr-2"></i>Today's Date
+                        </h3>
+                        <div id="dateInfo" class="space-y-2">
+                            <!-- English Date -->
+                            <div id="gregorianDate" class="text-base font-medium text-gray-800"></div>
+                            
+                            <!-- Hebrew Date -->
+                            <div id="hebrewDate" class="text-base font-medium text-gray-700 text-left" 
+                                 style="direction: ltr; text-align: left; font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
+                            
+                            <!-- Parsha of the Week -->
+                            <div class="mt-3 pt-2 border-t border-gray-200">
+                                <div class="text-xs font-medium text-gray-600 mb-1">Parashat HaShavua</div>
+                                <div id="parsha" class="text-xl font-bold text-blue-800 text-left leading-relaxed" 
+                                     style="direction: ltr; text-align: left; font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
+                            </div>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-600 mt-2">Tap logo 5× for admin</p>
-                </div>
-
-                <!-- Date and Calendar Information -->
-                <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Date Information -->
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                                <i class="fas fa-calendar mr-2"></i>Today's Date
-                            </h3>
-                            <div id="dateInfo" class="space-y-3">
-                                <!-- English Date -->
-                                <div id="gregorianDate" class="text-lg font-medium text-gray-800"></div>
-                                
-                                <!-- Hebrew Date -->
-                                <div id="hebrewDate" class="text-lg font-medium text-gray-700 text-left" 
-                                     style="direction: ltr; text-align: left; font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
-                                
-                                <!-- Parsha of the Week -->
-                                <div class="mt-4 pt-3 border-t border-gray-200">
-                                    <div class="text-sm font-medium text-gray-600 mb-1">Parashat HaShavua</div>
-                                    <div id="parsha" class="text-2xl font-bold text-blue-800 text-left leading-relaxed" 
-                                         style="direction: ltr; text-align: left; font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
+                    
+                    <!-- Prayer Times -->
+                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-pray mr-2"></i>Daily Prayers
+                        </h3>
+                        <div class="bg-green-50 p-3 rounded-lg">
+                            <div class="space-y-1 text-sm">
+                                <div id="shacharit" class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-sun w-4 text-yellow-500 mr-2"></i>
+                                        <span class="font-medium">Shacharit</span>
+                                    </div>
+                                    <span class="text-gray-700">7:00 AM</span>
                                 </div>
+                                <div id="mincha" class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-sun w-4 text-orange-500 mr-2"></i>
+                                        <span class="font-medium">Mincha</span>
+                                    </div>
+                                    <span class="text-gray-700">2:00 PM</span>
+                                </div>
+                                <div id="maariv" class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-moon w-4 text-indigo-500 mr-2"></i>
+                                        <span class="font-medium">Maariv</span>
+                                    </div>
+                                    <span class="text-gray-700">8:00 PM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shabbat Times -->
+                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-star-of-david mr-2"></i>Shabbat Times
+                        </h3>
+                        <div class="bg-blue-50 p-3 rounded-lg">
+                            <div class="space-y-1 text-sm">
+                                <div id="candleLighting" class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-fire w-4 text-yellow-600 mr-2"></i>
+                                        <span class="font-medium">Candle Lighting</span>
+                                    </div>
+                                    <span class="text-gray-700">Loading...</span>
+                                </div>
+                                <div id="havdalah" class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-wine-glass w-4 text-purple-600 mr-2"></i>
+                                        <span class="font-medium">Havdalah</span>
+                                    </div>
+                                    <span class="text-gray-700">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Comprehensive Zmanim -->
+                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-clock mr-2"></i>Detailed Zmanim
+                        </h3>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <table class="w-full zmanim-table">
+                                <tbody class="text-xs">
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Alos HaShachar (m"a)</td>
+                                        <td class="text-right text-gray-600">5:44 AM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Earliest Tallis (m"a)</td>
+                                        <td class="text-right text-gray-600">6:13 AM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">HaNetz HaChama</td>
+                                        <td class="text-right text-gray-600">6:57 AM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Sof Zman Shema (m"a)</td>
+                                        <td class="text-right text-gray-600">9:36 AM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Sof Zman Shema (gr"a)</td>
+                                        <td class="text-right text-gray-600">10:13 AM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Sof Zman Tefillah (m"a)</td>
+                                        <td class="text-right text-gray-600">10:53 AM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Sof Zman Tefillah (gr"a)</td>
+                                        <td class="text-right text-gray-600">11:18 AM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Chatzos</td>
+                                        <td class="text-right text-gray-600">1:28 PM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Mincha Gedola (m"a)</td>
+                                        <td class="text-right text-gray-600">2:01 PM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Mincha Ketana (gr"a)</td>
+                                        <td class="text-right text-gray-600">5:16 PM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Plag Mincha (m"a)</td>
+                                        <td class="text-right text-gray-600">6:37 PM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Shkia</td>
+                                        <td class="text-right text-gray-600">7:59 PM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Tzeis 595° (gr"a)</td>
+                                        <td class="text-right text-gray-600">8:23 PM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Tzeis 850°</td>
+                                        <td class="text-right text-gray-600">8:35 PM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Tzeis (42 min)</td>
+                                        <td class="text-right text-gray-600">8:41 PM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium text-gray-700">Tzeis (72 min)</td>
+                                        <td class="text-right text-gray-600">9:11 PM</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Donation Interface -->
+                <div class="landscape-right scroll-container">
+
+                    <!-- Donation Interface -->
+                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                        <h2 class="text-xl font-bold text-center text-gray-800 mb-4">
+                            <i class="fas fa-heart mr-2 text-red-500"></i>
+                            Make a Donation
+                        </h2>
+                        
+                        <!-- Preset Amount Buttons -->
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <button class="amount-button bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors" data-amount="5">
+                                $5
+                            </button>
+                            <button class="amount-button bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors" data-amount="18">
+                                $18<br><small>חי</small>
+                            </button>
+                            <button class="amount-button bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors" data-amount="36">
+                                $36<br><small>Double חי</small>
+                            </button>
+                            <button class="amount-button bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors" id="customAmountBtn">
+                                Custom<br>Amount
+                            </button>
+                        </div>
+                        
+                        <!-- Selected Amount Display -->
+                        <div class="text-center mb-4">
+                            <div class="text-2xl font-bold text-gray-800" id="selectedAmount">
+                                Amount: $0.00
                             </div>
                         </div>
                         
-                        <!-- Times Information -->
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                                <i class="fas fa-clock mr-2"></i>Zmanim & Prayer Times
-                            </h3>
-                            <div id="timesInfo" class="space-y-3">
-                                <!-- Shabbat Times -->
-                                <div class="bg-blue-50 p-3 rounded-lg">
-                                    <h4 class="text-sm font-semibold text-blue-800 mb-2">Shabbat Times</h4>
-                                    <div class="space-y-1 text-sm">
-                                        <div id="candleLighting" class="flex items-center">
-                                            <i class="fas fa-candle-holder w-4 text-yellow-600 mr-2"></i>
-                                            <span class="text-gray-700">Loading...</span>
-                                        </div>
-                                        <div id="havdalah" class="flex items-center">
-                                            <i class="fas fa-wine-glass w-4 text-purple-600 mr-2"></i>
-                                            <span class="text-gray-700">Loading...</span>
-                                        </div>
+                        <!-- Email Input -->
+                        <div class="mb-4">
+                            <label for="emailInput" class="block text-sm font-medium text-gray-700 mb-1">
+                                Email for receipt (optional)
+                            </label>
+                            <input 
+                                type="email" 
+                                id="emailInput" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+                                placeholder="your.email@example.com"
+                            >
+                        </div>
+                        
+                        <!-- Payment Method Selection -->
+                        <div class="mb-4">
+                            <h3 class="text-base font-semibold text-gray-800 mb-2">Payment Method</h3>
+                            <div class="grid grid-cols-1 gap-3">
+                                <button id="tapToPayBtn" class="kiosk-button bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg transition-colors flex items-center justify-center">
+                                    <i class="fas fa-mobile-alt mr-2 text-xl"></i>
+                                    <div>
+                                        <div class="font-bold">Tap to Pay</div>
+                                        <div class="text-sm">Touch your card or phone</div>
                                     </div>
-                                </div>
-                                
-                                <!-- Daily Prayer Times -->
-                                <div class="bg-green-50 p-3 rounded-lg">
-                                    <h4 class="text-sm font-semibold text-green-800 mb-2">Daily Prayers</h4>
-                                    <div class="space-y-1 text-sm">
-                                        <div id="shacharit" class="flex items-center">
-                                            <i class="fas fa-sun w-4 text-yellow-500 mr-2"></i>
-                                            <span class="text-gray-700">Shacharit: 7:00 AM</span>
-                                        </div>
-                                        <div id="mincha" class="flex items-center">
-                                            <i class="fas fa-sun w-4 text-orange-500 mr-2"></i>
-                                            <span class="text-gray-700">Mincha: 2:00 PM</span>
-                                        </div>
-                                        <div id="maariv" class="flex items-center">
-                                            <i class="fas fa-moon w-4 text-indigo-500 mr-2"></i>
-                                            <span class="text-gray-700">Maariv: 8:00 PM</span>
-                                        </div>
+                                </button>
+                                <button id="cardPaymentBtn" class="kiosk-button bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg transition-colors flex items-center justify-center">
+                                    <i class="fas fa-credit-card mr-2 text-xl"></i>
+                                    <div>
+                                        <div class="font-bold">Online Payment</div>
+                                        <div class="text-sm">Card details</div>
                                     </div>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Tap to Pay Interface -->
+                        <div id="tapToPayInterface" class="hidden">
+                            <div class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center bg-blue-50">
+                                <div class="text-4xl mb-3">
+                                    <i class="fas fa-wifi pulse-animation text-blue-500"></i>
                                 </div>
+                                <h3 class="text-lg font-bold text-blue-800 mb-2">Ready for Tap to Pay</h3>
+                                <p class="text-blue-600 mb-3 text-sm">Hold your contactless card or mobile device near the screen</p>
+                                <div class="text-base font-semibold text-blue-800" id="tapAmount">Amount: $0.00</div>
+                                <button id="cancelTapToPay" class="mt-3 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Camera Interface -->
+                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                        <h3 class="text-base font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-camera mr-2"></i>Photo Capture
+                        </h3>
+                        <div class="flex items-center space-x-3">
+                            <button id="takePhotoBtn" class="kiosk-button bg-gray-500 hover:bg-gray-600 text-white rounded-lg px-4 text-sm">
+                                Take Photo
+                            </button>
+                            <div id="photoPreview" class="w-16 h-16 border-2 border-gray-300 rounded-lg overflow-hidden hidden">
+                                <img id="photoImg" class="w-full h-full object-cover" alt="Photo Preview">
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Donation Interface -->
-                <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-                    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">
-                        <i class="fas fa-heart mr-2 text-red-500"></i>
-                        Make a Donation
-                    </h2>
-                    
-                    <!-- Preset Amount Buttons -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <button class="amount-button bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors" data-amount="5">
-                            $5
-                        </button>
-                        <button class="amount-button bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors" data-amount="18">
-                            $18<br><small>חי</small>
-                        </button>
-                        <button class="amount-button bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors" data-amount="36">
-                            $36<br><small>Double חי</small>
-                        </button>
-                        <button class="amount-button bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors" id="customAmountBtn">
-                            Custom<br>Amount
-                        </button>
-                    </div>
-                    
-                    <!-- Selected Amount Display -->
-                    <div class="text-center mb-6">
-                        <div class="text-3xl font-bold text-gray-800" id="selectedAmount">
-                            Amount: $0.00
-                        </div>
-                    </div>
-                    
-                    <!-- Email Input -->
-                    <div class="mb-6">
-                        <label for="emailInput" class="block text-sm font-medium text-gray-700 mb-2">
-                            Email for receipt (optional)
-                        </label>
-                        <input 
-                            type="email" 
-                            id="emailInput" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                            placeholder="your.email@example.com"
-                        >
-                    </div>
-                    
-                    <!-- Payment Method Selection -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-3">Payment Method</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <button id="tapToPayBtn" class="kiosk-button bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg transition-colors flex items-center justify-center">
-                                <i class="fas fa-mobile-alt mr-2 text-2xl"></i>
-                                <div>
-                                    <div class="font-bold">Tap to Pay</div>
-                                    <div class="text-sm">Touch your card or phone</div>
-                                </div>
-                            </button>
-                            <button id="cardPaymentBtn" class="kiosk-button bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg transition-colors flex items-center justify-center">
-                                <i class="fas fa-credit-card mr-2 text-2xl"></i>
-                                <div>
-                                    <div class="font-bold">Online Payment</div>
-                                    <div class="text-sm">Card details</div>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Tap to Pay Interface -->
-                    <div id="tapToPayInterface" class="hidden">
-                        <div class="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50">
-                            <div class="text-6xl mb-4">
-                                <i class="fas fa-wifi pulse-animation text-blue-500"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold text-blue-800 mb-2">Ready for Tap to Pay</h3>
-                            <p class="text-blue-600 mb-4">Hold your contactless card or mobile device near the screen</p>
-                            <div class="text-lg font-semibold text-blue-800" id="tapAmount">Amount: $0.00</div>
-                            <button id="cancelTapToPay" class="mt-4 px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors">
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Camera Interface -->
-                <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                        <i class="fas fa-camera mr-2"></i>Photo Capture
-                    </h3>
-                    <div class="flex items-center space-x-4">
-                        <button id="takePhotoBtn" class="kiosk-button bg-gray-500 hover:bg-gray-600 text-white rounded-lg px-6">
-                            Take Photo
-                        </button>
-                        <div id="photoPreview" class="w-20 h-20 border-2 border-gray-300 rounded-lg overflow-hidden hidden">
-                            <img id="photoImg" class="w-full h-full object-cover" alt="Photo Preview">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Status Messages -->
-                <div id="statusMessage" class="hidden fixed top-4 right-4 z-50"></div>
             </div>
+
+            <!-- Status Messages -->
+            <div id="statusMessage" class="hidden fixed top-4 right-4 z-50"></div>
         </div>
 
         <!-- Admin Modal -->

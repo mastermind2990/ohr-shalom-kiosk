@@ -891,27 +891,27 @@ class OhrShalomKiosk {
         // Update Shacharit
         const shacharitElement = document.getElementById('shacharit')
         if (shacharitElement) {
-            const span = shacharitElement.querySelector('span')
-            if (span) {
-                span.textContent = `Shacharit: ${this.config.shacharit || '7:00 AM'}`
+            const timeSpan = shacharitElement.querySelector('span:last-child')
+            if (timeSpan) {
+                timeSpan.textContent = this.config.shacharit || '7:00 AM'
             }
         }
         
         // Update Mincha
         const minchaElement = document.getElementById('mincha')
         if (minchaElement) {
-            const span = minchaElement.querySelector('span')
-            if (span) {
-                span.textContent = `Mincha: ${this.config.mincha || '2:00 PM'}`
+            const timeSpan = minchaElement.querySelector('span:last-child')
+            if (timeSpan) {
+                timeSpan.textContent = this.config.mincha || '2:00 PM'
             }
         }
         
         // Update Maariv
         const maarivElement = document.getElementById('maariv')
         if (maarivElement) {
-            const span = maarivElement.querySelector('span')
-            if (span) {
-                span.textContent = `Maariv: ${this.config.maariv || '8:00 PM'}`
+            const timeSpan = maarivElement.querySelector('span:last-child')
+            if (timeSpan) {
+                timeSpan.textContent = this.config.maariv || '8:00 PM'
             }
         }
     }
@@ -986,19 +986,17 @@ class OhrShalomKiosk {
         if (candles) {
             const candleElement = document.getElementById('candleLighting')
             if (candleElement) {
-                const span = candleElement.querySelector('span')
-                if (span) {
-                    span.textContent = candles.title
-                } else {
-                    candleElement.innerHTML = `<i class="fas fa-candle-holder w-4 text-yellow-600 mr-2"></i><span class="text-gray-700">${candles.title}</span>`
+                const timeSpan = candleElement.querySelector('span:last-child')
+                if (timeSpan) {
+                    timeSpan.textContent = candles.title
                 }
             }
         } else {
             const candleElement = document.getElementById('candleLighting')
             if (candleElement) {
-                const span = candleElement.querySelector('span')
-                if (span) {
-                    span.textContent = 'No candle lighting this week'
+                const timeSpan = candleElement.querySelector('span:last-child')
+                if (timeSpan) {
+                    timeSpan.textContent = 'No candle lighting this week'
                 }
             }
         }
@@ -1010,19 +1008,17 @@ class OhrShalomKiosk {
         if (havdalah) {
             const havdalahElement = document.getElementById('havdalah')
             if (havdalahElement) {
-                const span = havdalahElement.querySelector('span')
-                if (span) {
-                    span.textContent = havdalah.title
-                } else {
-                    havdalahElement.innerHTML = `<i class="fas fa-wine-glass w-4 text-purple-600 mr-2"></i><span class="text-gray-700">${havdalah.title}</span>`
+                const timeSpan = havdalahElement.querySelector('span:last-child')
+                if (timeSpan) {
+                    timeSpan.textContent = havdalah.title
                 }
             }
         } else {
             const havdalahElement = document.getElementById('havdalah')
             if (havdalahElement) {
-                const span = havdalahElement.querySelector('span')
-                if (span) {
-                    span.textContent = 'No Havdalah this week'
+                const timeSpan = havdalahElement.querySelector('span:last-child')
+                if (timeSpan) {
+                    timeSpan.textContent = 'No Havdalah this week'
                 }
             }
         }
