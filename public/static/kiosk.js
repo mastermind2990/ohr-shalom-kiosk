@@ -64,20 +64,10 @@ class OhrShalomKiosk {
     }
     
     setupEventListeners() {
-        console.log('Setting up event listeners...')
-        
         // Logo tap for admin access
-        const logoContainer = document.getElementById('logoContainer')
-        console.log('Logo container found:', !!logoContainer)
-        if (logoContainer) {
-            logoContainer.addEventListener('click', () => {
-                console.log('Logo container clicked!')
-                this.handleLogoTap()
-            })
-            console.log('Logo click event listener attached')
-        } else {
-            console.error('Logo container not found during event setup!')
-        }
+        document.getElementById('logoContainer').addEventListener('click', () => {
+            this.handleLogoTap()
+        })
         
         // Amount selection buttons
         document.querySelectorAll('.amount-button[data-amount]').forEach(button => {
