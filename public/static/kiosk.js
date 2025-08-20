@@ -244,21 +244,129 @@ class OhrShalomKiosk {
         
         try {
             const email = document.getElementById('emailInput').value.trim()
+            
+            // Create payment intent
             const paymentIntent = await this.createPaymentIntent(this.selectedAmount * 100, email, false)
             
-            // For web-based card payment, we'll use Stripe's Payment Element
-            // This is a simplified version - in production you'd want a more sophisticated checkout
-            const { error } = await this.stripe.redirectToCheckout({
-                sessionId: paymentIntent.clientSecret // In production, use Checkout Session
+            // Show card payment form
+            this.showCardPaymentForm(paymentIntent.clientSecret, email)
+            
+        } catch (error) {
+            console.error('Card payment error:', error)
+            this.showMessage('Card payment failed: ' + error.message, 'error')
+        }
+    }
+    
+    showCardPaymentForm(clientSecret, email) {
+        // Create modal for card payment
+        const modal = document.createElement('div')
+        modal.id = 'cardPaymentModal'
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center'
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold mb-4">Enter Card Details</h3>
+                <div class="mb-4">
+                    <div class="text-lg font-semibold text-gray-800">Amount: $${(this.selectedAmount).toFixed(2)}</div>
+                    ${email ? `<div class="text-sm text-gray-600">Receipt to: ${email}</div>` : ''}
+                </div>
+                <div id="card-element" class="p-3 border border-gray-300 rounded-lg mb-4">
+                    <!-- Stripe Elements will create form fields here -->
+                </div>
+                <div id="card-errors" class="text-red-600 text-sm mb-4 hidden"></div>
+                <div class="flex space-x-4">
+                    <button id="submit-payment" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg">
+                        <span id="payment-button-text">Pay $${(this.selectedAmount).toFixed(2)}</span>
+                        <div id="payment-spinner" class="hidden inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"></div>
+                    </button>
+                    <button id="cancel-payment" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg">Cancel</button>
+                </div>
+            </div>
+        `
+        
+        document.body.appendChild(modal)
+        
+        // Initialize Stripe Elements
+        const elements = this.stripe.elements({
+            clientSecret: clientSecret,
+            appearance: {
+                theme: 'stripe',
+                variables: {
+                    colorPrimary: '#3B82F6',
+                    colorBackground: '#ffffff',
+                    colorText: '#374151',
+                    colorDanger: '#EF4444',
+                    fontFamily: 'system-ui, sans-serif',
+                    spacingUnit: '4px',
+                    borderRadius: '6px'
+                }
+            }
+        })
+        
+        const cardElement = elements.create('payment', {
+            layout: 'tabs'
+        })
+        cardElement.mount('#card-element')
+        
+        // Handle form submission
+        document.getElementById('submit-payment').addEventListener('click', async () => {
+            this.processCardPayment(elements, clientSecret)
+        })
+        
+        // Handle cancel
+        document.getElementById('cancel-payment').addEventListener('click', () => {
+            document.body.removeChild(modal)
+        })
+        
+        // Handle real-time validation errors
+        cardElement.on('change', ({error}) => {
+            const errorElement = document.getElementById('card-errors')
+            if (error) {
+                errorElement.textContent = error.message
+                errorElement.classList.remove('hidden')
+            } else {
+                errorElement.classList.add('hidden')
+            }
+        })
+    }
+    
+    async processCardPayment(elements, clientSecret) {
+        const submitButton = document.getElementById('submit-payment')
+        const buttonText = document.getElementById('payment-button-text')
+        const spinner = document.getElementById('payment-spinner')
+        
+        // Disable button and show spinner
+        submitButton.disabled = true
+        buttonText.textContent = 'Processing...'
+        spinner.classList.remove('hidden')
+        
+        try {
+            const {error, paymentIntent} = await this.stripe.confirmPayment({
+                elements,
+                confirmParams: {
+                    return_url: window.location.origin + '?payment=success'
+                },
+                redirect: 'if_required'
             })
             
             if (error) {
                 throw error
             }
             
+            if (paymentIntent.status === 'succeeded') {
+                // Payment successful
+                document.body.removeChild(document.getElementById('cardPaymentModal'))
+                this.showMessage('Payment successful! Thank you for your donation', 'success')
+                this.resetInterface()
+            }
+            
         } catch (error) {
-            console.error('Card payment error:', error)
-            this.showMessage('Card payment failed: ' + error.message, 'error')
+            console.error('Payment failed:', error)
+            this.showMessage('Payment failed: ' + error.message, 'error')
+            
+            // Re-enable button
+            submitButton.disabled = false
+            buttonText.textContent = `Pay $${this.selectedAmount.toFixed(2)}`
+            spinner.classList.add('hidden')
         }
     }
     

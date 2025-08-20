@@ -15,8 +15,25 @@ app.post('/api/create-payment-intent', async (c) => {
   try {
     const { amountCents, currency = 'usd', email, enableTapToPay = false } = await c.req.json()
     
-    // In a real deployment, this would be your Stripe secret key from environment variables
-    // For now, returning a mock response that works with frontend
+    // Validate amount
+    if (!amountCents || amountCents < 50) { // Minimum $0.50
+      return c.json({ error: 'Invalid amount. Minimum $0.50 required.' }, 400)
+    }
+    
+    // For production deployment, you would use your Stripe secret key like this:
+    // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+    // const paymentIntent = await stripe.paymentIntents.create({
+    //   amount: amountCents,
+    //   currency: currency,
+    //   receipt_email: email || undefined,
+    //   metadata: {
+    //     source: 'ohr_shalom_kiosk',
+    //     enable_tap_to_pay: enableTapToPay.toString()
+    //   }
+    // })
+    // return c.json({ clientSecret: paymentIntent.client_secret })
+    
+    // For demo purposes, return a properly formatted mock response
     const response = {
       clientSecret: 'pi_mock_client_secret_' + Math.random().toString(36).substring(7),
       paymentIntentId: 'pi_mock_' + Math.random().toString(36).substring(7),
