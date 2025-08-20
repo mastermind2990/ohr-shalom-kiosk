@@ -152,6 +152,7 @@ class OhrShalomKiosk {
     
     handleLogoTap() {
         this.tapCount++
+        console.log('Logo tapped, count:', this.tapCount)
         
         if (this.tapTimeout) {
             clearTimeout(this.tapTimeout)
@@ -163,6 +164,7 @@ class OhrShalomKiosk {
         
         if (this.tapCount >= 5) {
             this.tapCount = 0
+            console.log('5 taps reached, showing admin modal')
             this.showAdminModal()
         }
     }
@@ -583,8 +585,18 @@ class OhrShalomKiosk {
     }
     
     showAdminModal() {
-        document.getElementById('adminModal').classList.remove('hidden')
-        document.getElementById('adminPinInput').focus()
+        console.log('showAdminModal called')
+        const modal = document.getElementById('adminModal')
+        if (modal) {
+            modal.classList.remove('hidden')
+            const pinInput = document.getElementById('adminPinInput')
+            if (pinInput) {
+                pinInput.focus()
+            }
+            console.log('Admin modal should now be visible')
+        } else {
+            console.error('Admin modal element not found!')
+        }
     }
     
     hideAdminModal() {
@@ -981,18 +993,43 @@ class OhrShalomKiosk {
         try {
             let url = '/api/hebcal?'
             
+            console.log('Loading Hebrew calendar with config:', {
+                geonameId: this.config.geonameId,
+                locationMethod: this.config.locationMethod,
+                latitude: this.config.latitude,
+                longitude: this.config.longitude
+            })
+            
             if (this.config.geonameId && this.config.locationMethod === 'geoname') {
                 url += `geonameid=${this.config.geonameId}`
             } else {
                 url += `lat=${this.config.latitude}&lon=${this.config.longitude}`
             }
             
+            console.log('Hebrew calendar API URL:', url)
+            
             const response = await fetch(url)
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+            }
+            
             const data = await response.json()
+            console.log('Hebrew calendar API response:', data)
             
             this.displayHebrewCalendar(data)
         } catch (error) {
             console.error('Failed to load Hebrew calendar:', error)
+            // Set fallback loading text
+            const candleElement = document.getElementById('candleLighting')
+            const havdalahElement = document.getElementById('havdalah')
+            if (candleElement) {
+                const timeSpan = candleElement.querySelector('span:last-child')
+                if (timeSpan) timeSpan.textContent = 'Calendar unavailable'
+            }
+            if (havdalahElement) {
+                const timeSpan = havdalahElement.querySelector('span:last-child')
+                if (timeSpan) timeSpan.textContent = 'Calendar unavailable'
+            }
         }
     }
     
@@ -1284,7 +1321,6 @@ function showPaymentFailureModal(message) {
             document.body.removeChild(modal)
         })
     }
-}
 
 // Export for potential external use
 window.OhrShalomKiosk = OhrShalomKiosk
