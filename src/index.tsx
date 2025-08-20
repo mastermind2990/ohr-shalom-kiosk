@@ -271,7 +271,7 @@ app.get('/', (c) => {
                         </h1>
                     </div>
                 </div>
-                <p class="text-xs text-gray-600 mt-1">Tap logo 5× for admin</p>
+
             </div>
             
             <!-- Main Content Grid for Landscape -->

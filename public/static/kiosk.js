@@ -334,22 +334,62 @@ class OhrShalomKiosk {
                 // Handle demo payment submission
                 document.getElementById('submit-payment').addEventListener('click', async () => {
                     const cardNumber = document.getElementById('demo-card-number').value
+                    const expiry = document.getElementById('demo-expiry').value
+                    const cvc = document.getElementById('demo-cvc').value
+                    const name = document.getElementById('demo-name').value
+                    
+                    // Validate form fields
                     if (!cardNumber || cardNumber.length < 10) {
                         this.showMessage('Please enter a valid card number', 'error')
                         return
                     }
+                    if (!expiry || expiry.length < 4) {
+                        this.showMessage('Please enter expiry date (MM/YY)', 'error')
+                        return
+                    }
+                    if (!cvc || cvc.length < 3) {
+                        this.showMessage('Please enter CVC code', 'error')
+                        return
+                    }
+                    if (!name || name.trim().length < 2) {
+                        this.showMessage('Please enter cardholder name', 'error')
+                        return
+                    }
                     
-                    // Simulate processing
+                    // Simulate processing with realistic flow
                     const button = document.getElementById('submit-payment')
                     button.disabled = true
                     document.getElementById('payment-button-text').textContent = 'Processing...'
                     document.getElementById('payment-spinner').classList.remove('hidden')
                     
+                    // Simulate different payment outcomes for demo
+                    const outcomes = [
+                        { type: 'success', delay: 2000 },
+                        { type: 'requires_authentication', delay: 1500 },
+                        { type: 'declined', delay: 2500 },
+                        { type: 'success', delay: 1800 }, // Weight success more
+                        { type: 'success', delay: 2200 }
+                    ]
+                    
+                    const outcome = outcomes[Math.floor(Math.random() * outcomes.length)]
+                    
                     setTimeout(() => {
                         document.body.removeChild(modal)
-                        this.showMessage('Demo payment successful! (No real charge made)', 'success')
+                        
+                        switch(outcome.type) {
+                            case 'success':
+                                showPaymentSuccessModal(this.selectedAmount, document.getElementById('emailInput').value)
+                                break
+                            case 'requires_authentication':
+                                showAuthenticationModal(this.selectedAmount, document.getElementById('emailInput').value)
+                                break
+                            case 'declined':
+                                showPaymentFailureModal('Your card was declined. Please try a different payment method.')
+                                break
+                        }
+                        
                         this.resetInterface()
-                    }, 2000)
+                    }, outcome.delay)
                 })
             } else {
                 // Real Stripe Elements (for production)
@@ -1080,6 +1120,169 @@ function enterKioskMode() {
 function exitKioskMode() {
     if (document.exitFullscreen) {
         document.exitFullscreen()
+    }
+}
+
+// Payment feedback modals (outside class for scope)
+function showPaymentSuccessModal(selectedAmount, email) {
+        const modal = document.createElement('div')
+        modal.id = 'paymentSuccessModal'
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center'
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+                <div class="mb-6">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                        <i class="fas fa-check text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Thank You!</h3>
+                    <p class="text-gray-600 mb-4">Your donation of $${selectedAmount.toFixed(2)} has been processed successfully.</p>
+                    <div class="bg-green-50 p-4 rounded-lg mb-4">
+                        <p class="text-sm text-green-800">
+                            <i class="fas fa-heart mr-2"></i>
+                            Your generosity helps support our community and sacred mission.
+                        </p>
+                    </div>
+                    ${email ? 
+                        `<p class="text-sm text-gray-500">A receipt has been sent to ${email}</p>` : 
+                        '<p class="text-sm text-gray-500">Your payment has been processed</p>'
+                    }
+                </div>
+                <button id="successModalClose" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    Continue
+                </button>
+            </div>
+        `
+        
+        document.body.appendChild(modal)
+        
+        // Auto-close after 8 seconds or on click
+        const closeModal = () => {
+            if (document.body.contains(modal)) {
+                document.body.removeChild(modal)
+            }
+        }
+        
+        document.getElementById('successModalClose').addEventListener('click', closeModal)
+        setTimeout(closeModal, 8000)
+    }
+    
+function showAuthenticationModal(selectedAmount, email) {
+        const modal = document.createElement('div')
+        modal.id = 'authModal'
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center'
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <div class="text-center mb-6">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                        <i class="fas fa-shield-alt text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Authentication Required</h3>
+                    <p class="text-gray-600 mb-4">Your bank requires additional verification for this transaction.</p>
+                </div>
+                
+                <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                    <p class="text-sm text-blue-800 mb-3">
+                        <i class="fas fa-mobile-alt mr-2"></i>
+                        Please check your phone for a text message or push notification from your bank.
+                    </p>
+                    <div class="border-2 border-dashed border-blue-300 p-3 rounded text-center">
+                        <input type="text" id="authCode" class="w-full text-center text-lg font-mono border-0 bg-transparent focus:outline-none" 
+                               placeholder="Enter 6-digit code" maxlength="6">
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button id="authSubmit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">
+                        Verify
+                    </button>
+                    <button id="authCancel" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        `
+        
+        document.body.appendChild(modal)
+        
+        // Focus on input
+        document.getElementById('authCode').focus()
+        
+        // Handle verification
+        document.getElementById('authSubmit').addEventListener('click', () => {
+            const code = document.getElementById('authCode').value
+            if (code.length === 6) {
+                document.body.removeChild(modal)
+                // Simulate verification success (80% success rate)
+                if (Math.random() < 0.8) {
+                    showPaymentSuccessModal(selectedAmount, email)
+                } else {
+                    showPaymentFailureModal('Authentication failed. Please try again or contact your bank.')
+                }
+            } else {
+                this.showMessage('Please enter the complete 6-digit code', 'error')
+            }
+        })
+        
+        // Handle cancel
+        document.getElementById('authCancel').addEventListener('click', () => {
+            document.body.removeChild(modal)
+            this.showMessage('Payment cancelled', 'info')
+        })
+        
+        // Auto-submit when 6 digits entered
+        document.getElementById('authCode').addEventListener('input', (e) => {
+            if (e.target.value.length === 6) {
+                setTimeout(() => {
+                    document.getElementById('authSubmit').click()
+                }, 500)
+            }
+        })
+    }
+    
+function showPaymentFailureModal(message) {
+        const modal = document.createElement('div')
+        modal.id = 'paymentFailureModal'
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center'
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 text-center">
+                <div class="mb-6">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Payment Issue</h3>
+                    <p class="text-gray-600 mb-4">${message}</p>
+                </div>
+                
+                <div class="bg-yellow-50 p-4 rounded-lg mb-6">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        You can try again with a different payment method, or contact our office for assistance.
+                    </p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button id="tryAgainBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">
+                        Try Again
+                    </button>
+                    <button id="failureModalClose" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `
+        
+        document.body.appendChild(modal)
+        
+        // Handle try again
+        document.getElementById('tryAgainBtn').addEventListener('click', () => {
+            document.body.removeChild(modal)
+            // Keep the amount selected so they can try a different payment method
+        })
+        
+        // Handle close
+        document.getElementById('failureModalClose').addEventListener('click', () => {
+            document.body.removeChild(modal)
+        })
     }
 }
 
