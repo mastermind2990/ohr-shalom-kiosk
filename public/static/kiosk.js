@@ -237,6 +237,8 @@ class OhrShalomKiosk {
     }
     
     async startCardPayment() {
+        console.log('startCardPayment called, amount:', this.selectedAmount)
+        
         if (this.selectedAmount <= 0) {
             this.showMessage('Please select an amount first', 'error')
             return
@@ -244,9 +246,14 @@ class OhrShalomKiosk {
         
         try {
             const email = document.getElementById('emailInput').value.trim()
+            console.log('Creating payment intent for amount:', this.selectedAmount * 100)
+            
+            // Show loading message
+            this.showMessage('Preparing payment form...', 'info')
             
             // Create payment intent
             const paymentIntent = await this.createPaymentIntent(this.selectedAmount * 100, email, false)
+            console.log('Payment intent created:', paymentIntent)
             
             // Show card payment form
             this.showCardPaymentForm(paymentIntent.clientSecret, email)
@@ -258,6 +265,8 @@ class OhrShalomKiosk {
     }
     
     showCardPaymentForm(clientSecret, email) {
+        console.log('showCardPaymentForm called with clientSecret:', clientSecret)
+        
         // Create modal for card payment
         const modal = document.createElement('div')
         modal.id = 'cardPaymentModal'
@@ -269,7 +278,12 @@ class OhrShalomKiosk {
                     <div class="text-lg font-semibold text-gray-800">Amount: $${(this.selectedAmount).toFixed(2)}</div>
                     ${email ? `<div class="text-sm text-gray-600">Receipt to: ${email}</div>` : ''}
                 </div>
-                <div id="card-element" class="p-3 border border-gray-300 rounded-lg mb-4">
+                <div class="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                    <div class="text-sm text-yellow-800">
+                        <strong>Demo Mode:</strong> This is a test payment form. No real charges will occur.
+                    </div>
+                </div>
+                <div id="card-element" class="p-3 border border-gray-300 rounded-lg mb-4 min-h-[40px]">
                     <!-- Stripe Elements will create form fields here -->
                 </div>
                 <div id="card-errors" class="text-red-600 text-sm mb-4 hidden"></div>
@@ -285,47 +299,93 @@ class OhrShalomKiosk {
         
         document.body.appendChild(modal)
         
-        // Initialize Stripe Elements
-        const elements = this.stripe.elements({
-            clientSecret: clientSecret,
-            appearance: {
-                theme: 'stripe',
-                variables: {
-                    colorPrimary: '#3B82F6',
-                    colorBackground: '#ffffff',
-                    colorText: '#374151',
-                    colorDanger: '#EF4444',
-                    fontFamily: 'system-ui, sans-serif',
-                    spacingUnit: '4px',
-                    borderRadius: '6px'
-                }
+        try {
+            // For demo mode with mock client secret, show a simplified form
+            if (clientSecret.includes('mock')) {
+                console.log('Demo mode detected, showing simplified form')
+                document.getElementById('card-element').innerHTML = `
+                    <div class="space-y-3">
+                        <input type="text" placeholder="Card number (e.g., 4242 4242 4242 4242)" class="w-full p-2 border rounded" id="demo-card-number">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" placeholder="MM/YY" class="p-2 border rounded" id="demo-expiry">
+                            <input type="text" placeholder="CVC" class="p-2 border rounded" id="demo-cvc">
+                        </div>
+                        <input type="text" placeholder="Cardholder name" class="w-full p-2 border rounded" id="demo-name">
+                    </div>
+                `
+                
+                // Handle demo payment submission
+                document.getElementById('submit-payment').addEventListener('click', async () => {
+                    const cardNumber = document.getElementById('demo-card-number').value
+                    if (!cardNumber || cardNumber.length < 10) {
+                        this.showMessage('Please enter a valid card number', 'error')
+                        return
+                    }
+                    
+                    // Simulate processing
+                    const button = document.getElementById('submit-payment')
+                    button.disabled = true
+                    document.getElementById('payment-button-text').textContent = 'Processing...'
+                    document.getElementById('payment-spinner').classList.remove('hidden')
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(modal)
+                        this.showMessage('Demo payment successful! (No real charge made)', 'success')
+                        this.resetInterface()
+                    }, 2000)
+                })
+            } else {
+                // Real Stripe Elements (for production)
+                console.log('Production mode, initializing Stripe Elements')
+                const elements = this.stripe.elements({
+                    clientSecret: clientSecret,
+                    appearance: {
+                        theme: 'stripe',
+                        variables: {
+                            colorPrimary: '#3B82F6',
+                            colorBackground: '#ffffff',
+                            colorText: '#374151',
+                            colorDanger: '#EF4444',
+                            fontFamily: 'system-ui, sans-serif',
+                            spacingUnit: '4px',
+                            borderRadius: '6px'
+                        }
+                    }
+                })
+                
+                const cardElement = elements.create('payment', {
+                    layout: 'tabs'
+                })
+                cardElement.mount('#card-element')
+                
+                // Handle form submission
+                document.getElementById('submit-payment').addEventListener('click', async () => {
+                    this.processCardPayment(elements, clientSecret)
+                })
+                
+                // Handle real-time validation errors
+                cardElement.on('change', ({error}) => {
+                    const errorElement = document.getElementById('card-errors')
+                    if (error) {
+                        errorElement.textContent = error.message
+                        errorElement.classList.remove('hidden')
+                    } else {
+                        errorElement.classList.add('hidden')
+                    }
+                })
             }
-        })
-        
-        const cardElement = elements.create('payment', {
-            layout: 'tabs'
-        })
-        cardElement.mount('#card-element')
-        
-        // Handle form submission
-        document.getElementById('submit-payment').addEventListener('click', async () => {
-            this.processCardPayment(elements, clientSecret)
-        })
+        } catch (error) {
+            console.error('Error setting up payment form:', error)
+            document.getElementById('card-element').innerHTML = `
+                <div class="text-red-600 p-4">
+                    Error setting up payment form: ${error.message}
+                </div>
+            `
+        }
         
         // Handle cancel
         document.getElementById('cancel-payment').addEventListener('click', () => {
             document.body.removeChild(modal)
-        })
-        
-        // Handle real-time validation errors
-        cardElement.on('change', ({error}) => {
-            const errorElement = document.getElementById('card-errors')
-            if (error) {
-                errorElement.textContent = error.message
-                errorElement.classList.remove('hidden')
-            } else {
-                errorElement.classList.add('hidden')
-            }
         })
     }
     
@@ -487,8 +547,76 @@ class OhrShalomKiosk {
     }
     
     showAdminConfig() {
-        // In production, this would show a full admin configuration interface
-        this.showMessage('Admin access granted - Configuration features coming soon', 'success')
+        // Create admin configuration modal
+        const modal = document.createElement('div')
+        modal.id = 'adminConfigModal'
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center'
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+                <h3 class="text-xl font-bold mb-4">Admin Configuration</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-2">System Status</h4>
+                        <div class="text-sm space-y-1">
+                            <div>Selected Amount: $${this.selectedAmount.toFixed(2)}</div>
+                            <div>Stripe Mode: Test</div>
+                            <div>Terminal Ready: ${this.terminal ? 'Yes' : 'No'}</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-2">Configuration</h4>
+                        <div class="text-sm space-y-1">
+                            <div>Location: ${this.config.latitude}, ${this.config.longitude}</div>
+                            <div>Timezone: ${this.config.timeZone}</div>
+                            <div>Admin PIN: ${this.config.adminPin}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="font-semibold text-gray-800 mb-2">Actions</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="testPayment" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Test Payment</button>
+                        <button id="testCamera" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Test Camera</button>
+                        <button id="refreshCalendar" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">Refresh Calendar</button>
+                        <button id="enterKiosk" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">Kiosk Mode</button>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-4 mt-6">
+                    <button id="adminConfigClose" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg">Close</button>
+                </div>
+            </div>
+        `
+        
+        document.body.appendChild(modal)
+        
+        // Add event listeners
+        document.getElementById('adminConfigClose').addEventListener('click', () => {
+            document.body.removeChild(modal)
+        })
+        
+        document.getElementById('testPayment').addEventListener('click', () => {
+            this.setAmount(5) // Set $5 for testing
+            this.showMessage('Test amount set to $5', 'info')
+        })
+        
+        document.getElementById('testCamera').addEventListener('click', () => {
+            this.takePhoto()
+        })
+        
+        document.getElementById('refreshCalendar').addEventListener('click', () => {
+            this.loadHebrewCalendar()
+            this.showMessage('Calendar refreshed', 'success')
+        })
+        
+        document.getElementById('enterKiosk').addEventListener('click', () => {
+            enterKioskMode()
+            document.body.removeChild(modal)
+            this.showMessage('Entering kiosk mode', 'info')
+        })
     }
     
     showCustomAmountModal() {
