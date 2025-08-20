@@ -7,7 +7,10 @@ class OhrShalomKiosk {
             adminPin: '12345',
             latitude: 28.5383,
             longitude: -81.3792,
-            timeZone: 'America/New_York'
+            timeZone: 'America/New_York',
+            // Location configuration - default to Orlando, FL using Geoname ID
+            geonameId: 4167147, // Orlando, FL
+            locationMethod: 'geoname' // 'geoname' or 'coordinates'
         }
         
         // State
@@ -840,7 +843,9 @@ class OhrShalomKiosk {
                     adminPin: '12345',
                     latitude: 28.5383,
                     longitude: -81.3792,
-                    timeZone: 'America/New_York'
+                    timeZone: 'America/New_York',
+                    geonameId: 4167147, // Orlando, FL
+                    locationMethod: 'geoname'
                 }
                 this.showMessage('Settings reset to defaults', 'success')
                 document.body.removeChild(modal)
