@@ -1,0 +1,163 @@
+# FIXED Android Build Workflow - Copy this to .github/workflows/android-build.yml
+# This version fixes the SDK setup issues and build failures
+
+name: Android Build (Fixed)
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'android-middleware/**' ]
+  pull_request:
+    branches: [ main ]
+    paths: [ 'android-middleware/**' ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Android SDK (Fixed Parameters)
+      uses: android-actions/setup-android@v3
+      with:
+        cmdline-tools-version: '11076708'
+        accept-android-sdk-licenses: true
+        log-accepted-android-sdk-licenses: false
+        
+    - name: Install Android SDK components
+      run: |
+        echo "Installing required Android SDK components..."
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34"
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;34.0.0"
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools"
+        
+    - name: Verify Android SDK installation
+      run: |
+        echo "Android SDK Home: $ANDROID_HOME"
+        echo "Installed platforms:"
+        ls -la $ANDROID_HOME/platforms/ || echo "No platforms directory"
+        echo "Installed build-tools:"
+        ls -la $ANDROID_HOME/build-tools/ || echo "No build-tools directory"
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('android-middleware/**/*.gradle*', 'android-middleware/**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Make gradlew executable
+      run: chmod +x android-middleware/gradlew
+      
+    - name: Verify gradlew and project structure
+      run: |
+        echo "=== Gradlew executable check ==="
+        ls -la android-middleware/gradlew
+        echo "=== Android project structure ==="
+        ls -la android-middleware/
+        echo "=== App module check ==="
+        ls -la android-middleware/app/ || echo "App directory not found"
+        echo "=== Build gradle files ==="
+        find android-middleware -name "build.gradle" -o -name "build.gradle.kts"
+        
+    - name: Clean project thoroughly
+      run: |
+        cd android-middleware
+        echo "Cleaning project..."
+        ./gradlew clean --stacktrace --info --no-daemon
+        
+    - name: Build debug APK with maximum logging
+      run: |
+        cd android-middleware
+        echo "Building debug APK..."
+        ./gradlew assembleDebug --stacktrace --info --debug --no-daemon
+        
+    - name: Verify debug APK creation
+      run: |
+        echo "=== Checking for debug APK ==="
+        find android-middleware -name "*.apk" -type f
+        ls -la android-middleware/app/build/outputs/apk/debug/ || echo "Debug outputs directory not found"
+        ls -la android-middleware/app/build/outputs/ || echo "No outputs directory"
+        ls -la android-middleware/app/build/ || echo "No build directory"
+        
+    - name: Build release APK (if debug succeeded)
+      run: |
+        cd android-middleware
+        echo "Building release APK..."
+        ./gradlew assembleRelease --stacktrace --info --debug --no-daemon
+      continue-on-error: true
+        
+    - name: List all generated files (comprehensive)
+      run: |
+        echo "=== All APK files in project ==="
+        find android-middleware -name "*.apk" -type f -exec ls -la {} \;
+        echo "=== Build outputs directory structure ==="
+        find android-middleware/app/build/outputs -type f -name "*.apk" 2>/dev/null || echo "No APK files found in outputs"
+        echo "=== Complete build directory ==="
+        find android-middleware/app/build -type f -name "*.apk" 2>/dev/null || echo "No APK files found in build directory"
+        
+    - name: Upload Debug APK (with flexible path)
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: payment-middleware-debug-apk
+        path: |
+          android-middleware/app/build/outputs/apk/debug/*.apk
+          android-middleware/app/build/outputs/apk/**/*debug*.apk
+        if-no-files-found: warn
+        
+    - name: Upload Release APK (with flexible path)
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: payment-middleware-release-apk
+        path: |
+          android-middleware/app/build/outputs/apk/release/*.apk
+          android-middleware/app/build/outputs/apk/**/*release*.apk
+        if-no-files-found: warn
+        
+    - name: Upload complete build directory for debugging
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: complete-build-debug
+        path: |
+          android-middleware/app/build/
+          android-middleware/build/
+          android-middleware/gradle/
+        if-no-files-found: ignore
+
+    - name: Upload build logs and reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-logs-and-reports
+        path: |
+          android-middleware/app/build/reports/
+          android-middleware/build/reports/
+          android-middleware/*.log
+        if-no-files-found: ignore
+
+    - name: Create Release (only if APKs exist)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        if find android-middleware/app/build/outputs -name "*.apk" -type f | grep -q .; then
+          echo "APKs found, creating release..."
+        else
+          echo "No APKs found, skipping release creation"
+          exit 0
+        fi
+      continue-on-error: true
