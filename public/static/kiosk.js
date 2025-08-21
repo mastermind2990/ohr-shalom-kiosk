@@ -962,30 +962,35 @@ class OhrShalomKiosk {
     }
     
     updatePrayerTimesDisplay() {
+        console.log('Updating prayer times display with config:', this.config)
+        
         // Update Shacharit
         const shacharitElement = document.getElementById('shacharit')
         if (shacharitElement) {
-            const timeSpan = shacharitElement.querySelector('span:last-child')
+            const timeSpan = shacharitElement.querySelector('span.text-gray-700')
             if (timeSpan) {
                 timeSpan.textContent = this.config.shacharit || '7:00 AM'
+                console.log('Updated Shacharit time to:', timeSpan.textContent)
             }
         }
         
         // Update Mincha
         const minchaElement = document.getElementById('mincha')
         if (minchaElement) {
-            const timeSpan = minchaElement.querySelector('span:last-child')
+            const timeSpan = minchaElement.querySelector('span.text-gray-700')
             if (timeSpan) {
                 timeSpan.textContent = this.config.mincha || '2:00 PM'
+                console.log('Updated Mincha time to:', timeSpan.textContent)
             }
         }
         
         // Update Maariv
         const maarivElement = document.getElementById('maariv')
         if (maarivElement) {
-            const timeSpan = maarivElement.querySelector('span:last-child')
+            const timeSpan = maarivElement.querySelector('span.text-gray-700')
             if (timeSpan) {
                 timeSpan.textContent = this.config.maariv || '8:00 PM'
+                console.log('Updated Maariv time to:', timeSpan.textContent)
             }
         }
     }
@@ -1046,7 +1051,7 @@ class OhrShalomKiosk {
             sabbatElements.forEach(elementId => {
                 const element = document.getElementById(elementId)
                 if (element) {
-                    const timeSpan = element.querySelector('span:last-child')
+                    const timeSpan = element.querySelector('span.text-gray-700')
                     if (timeSpan) timeSpan.textContent = 'Calendar unavailable'
                 }
             })
@@ -1083,17 +1088,19 @@ class OhrShalomKiosk {
         if (candles) {
             const candleElement = document.getElementById('candleLighting')
             if (candleElement) {
-                const timeSpan = candleElement.querySelector('span:last-child')
+                const timeSpan = candleElement.querySelector('span.text-gray-700')
                 if (timeSpan) {
                     // Extract just the time from "Candle lighting: 7:39pm"
                     const timeMatch = candles.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
-                    timeSpan.textContent = timeMatch ? timeMatch[1] : candles.title
+                    const timeText = timeMatch ? timeMatch[1] : candles.title
+                    timeSpan.textContent = timeText
+                    console.log('Updated Candle Lighting time to:', timeText)
                 }
             }
         } else {
             const candleElement = document.getElementById('candleLighting')
             if (candleElement) {
-                const timeSpan = candleElement.querySelector('span:last-child')
+                const timeSpan = candleElement.querySelector('span.text-gray-700')
                 if (timeSpan) {
                     timeSpan.textContent = 'No candle lighting this week'
                 }
@@ -1107,17 +1114,19 @@ class OhrShalomKiosk {
         if (havdalah) {
             const havdalahElement = document.getElementById('havdalah')
             if (havdalahElement) {
-                const timeSpan = havdalahElement.querySelector('span:last-child')
+                const timeSpan = havdalahElement.querySelector('span.text-gray-700')
                 if (timeSpan) {
                     // Extract just the time from "Havdalah (50 min): 8:46pm"
                     const timeMatch = havdalah.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
-                    timeSpan.textContent = timeMatch ? timeMatch[1] : havdalah.title
+                    const timeText = timeMatch ? timeMatch[1] : havdalah.title
+                    timeSpan.textContent = timeText
+                    console.log('Updated Havdalah time to:', timeText)
                 }
             }
         } else {
             const havdalahElement = document.getElementById('havdalah')
             if (havdalahElement) {
-                const timeSpan = havdalahElement.querySelector('span:last-child')
+                const timeSpan = havdalahElement.querySelector('span.text-gray-700')
                 if (timeSpan) {
                     timeSpan.textContent = 'No Havdalah this week'
                 }
@@ -1190,18 +1199,20 @@ class OhrShalomKiosk {
                 // Update 18 Min
                 const eighteenMinElement = document.getElementById('eighteenMin')
                 if (eighteenMinElement) {
-                    const timeSpan = eighteenMinElement.querySelector('span:last-child')
+                    const timeSpan = eighteenMinElement.querySelector('span.text-gray-700')
                     if (timeSpan) {
                         timeSpan.textContent = eighteenMinTime
+                        console.log('Updated 18 Min time to:', eighteenMinTime)
                     }
                 }
                 
                 // Update 72min
                 const seventytwoMinElement = document.getElementById('seventytwoMin')
                 if (seventytwoMinElement) {
-                    const timeSpan = seventytwoMinElement.querySelector('span:last-child')
+                    const timeSpan = seventytwoMinElement.querySelector('span.text-gray-700')
                     if (timeSpan) {
                         timeSpan.textContent = seventytwoMinTime
+                        console.log('Updated 72min time to:', seventytwoMinTime)
                     }
                 }
             } else {
@@ -1217,7 +1228,7 @@ class OhrShalomKiosk {
     setFallbackSabbathTimes(havdalah) {
         const eighteenMinElement = document.getElementById('eighteenMin')
         if (eighteenMinElement) {
-            const timeSpan = eighteenMinElement.querySelector('span:last-child')
+            const timeSpan = eighteenMinElement.querySelector('span.text-gray-700')
             if (timeSpan) {
                 if (havdalah) {
                     timeSpan.textContent = 'See Havdalah'
@@ -1229,7 +1240,7 @@ class OhrShalomKiosk {
         
         const seventytwoMinElement = document.getElementById('seventytwoMin')
         if (seventytwoMinElement) {
-            const timeSpan = seventytwoMinElement.querySelector('span:last-child')
+            const timeSpan = seventytwoMinElement.querySelector('span.text-gray-700')
             if (timeSpan) {
                 if (havdalah) {
                     timeSpan.textContent = 'See Havdalah'
