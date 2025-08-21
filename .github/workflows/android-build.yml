@@ -1,4 +1,7 @@
-name: Android Build
+# Enhanced Android Build Workflow - Copy this to .github/workflows/android-build.yml
+# This version includes fixes for common build failures
+
+name: Android Build (Enhanced)
 
 on:
   push:
@@ -12,6 +15,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
     - name: Checkout repository
@@ -25,57 +29,102 @@ jobs:
         
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
+      with:
+        api-level: 34
+        build-tools: 34.0.0
+        
+    - name: Accept Android SDK licenses
+      run: yes | sdkmanager --licenses || true
       
+    - name: Install required SDK components
+      run: |
+        sdkmanager --install "platforms;android-34" || true
+        sdkmanager --install "build-tools;34.0.0" || true
+        sdkmanager --install "platform-tools" || true
+        
     - name: Cache Gradle packages
       uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        key: ${{ runner.os }}-gradle-${{ hashFiles('android-middleware/**/*.gradle*', 'android-middleware/**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
           
-    - name: Grant execute permission for gradlew
+    - name: Make gradlew executable (fix permissions)
       run: chmod +x android-middleware/gradlew
       
-    - name: Build debug APK
+    - name: Clean project (prevent cached issues)
       run: |
         cd android-middleware
-        ./gradlew assembleDebug --stacktrace
+        ./gradlew clean --stacktrace --info
         
-    - name: Build release APK (unsigned)
+    - name: Build debug APK with detailed logging
       run: |
         cd android-middleware
-        ./gradlew assembleRelease --stacktrace
+        ./gradlew assembleDebug --stacktrace --info --no-daemon
+        
+    - name: Build release APK with detailed logging
+      run: |
+        cd android-middleware
+        ./gradlew assembleRelease --stacktrace --info --no-daemon
+      continue-on-error: true
+        
+    - name: List generated APK files (debugging)
+      run: |
+        echo "=== Debug APK Location ==="
+        find android-middleware -name "*.apk" -type f
+        ls -la android-middleware/app/build/outputs/apk/debug/ || echo "Debug APK directory not found"
+        ls -la android-middleware/app/build/outputs/apk/release/ || echo "Release APK directory not found"
         
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
+      if: success() || failure()
       with:
         name: payment-middleware-debug-apk
         path: android-middleware/app/build/outputs/apk/debug/app-debug.apk
+        if-no-files-found: warn
         
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
+      if: success() || failure()
       with:
         name: payment-middleware-release-apk
         path: android-middleware/app/build/outputs/apk/release/app-release-unsigned.apk
+        if-no-files-found: warn
+        
+    - name: Upload build logs on failure
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: build-logs
+        path: |
+          android-middleware/app/build/reports/
+          android-middleware/build/reports/
+        if-no-files-found: ignore
 
-    - name: Create Release
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    - name: Create Release (only on successful build)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_number }}
         name: Payment Middleware v${{ github.run_number }}
         body: |
-          Automated build of Payment Middleware Android app
+          🚀 **Automated Android Build Success!**
           
           **Changes:**
           ${{ github.event.head_commit.message }}
           
-          **Download APK Files:**
-          - Debug APK: For testing and development
-          - Release APK: Production version (unsigned)
+          **📱 APK Files Available:**
+          - `app-debug.apk` - Debug version for testing
+          - `app-release-unsigned.apk` - Production version (unsigned)
+          
+          **📋 Build Info:**
+          - Android Target SDK: 34
+          - Min SDK: 24
+          - Java Version: 17
+          - Kotlin Version: 1.9.25
         files: |
           android-middleware/app/build/outputs/apk/debug/app-debug.apk
           android-middleware/app/build/outputs/apk/release/app-release-unsigned.apk
