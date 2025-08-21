@@ -342,7 +342,7 @@ app.get('/', (c) => {
                             <div class="space-y-1 text-sm">
                                 <div id="candleLighting" class="flex items-center justify-between">
                                     <div class="flex items-center">
-                                        <i class="fas fa-fire w-4 text-yellow-600 mr-2"></i>
+                                        <span class="w-4 text-yellow-600 mr-2 text-sm">🕯️🕯️</span>
                                         <span class="font-medium">Candle Lighting</span>
                                     </div>
                                     <span class="text-gray-700">Loading...</span>
@@ -519,20 +519,7 @@ app.get('/', (c) => {
                         </div>
                     </div>
 
-                    <!-- Camera Interface -->
-                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-                        <h3 class="text-base font-semibold text-gray-800 mb-3">
-                            <i class="fas fa-camera mr-2"></i>Photo Capture
-                        </h3>
-                        <div class="flex items-center space-x-3">
-                            <button id="takePhotoBtn" class="kiosk-button bg-gray-500 hover:bg-gray-600 text-white rounded-lg px-4 text-sm">
-                                Take Photo
-                            </button>
-                            <div id="photoPreview" class="w-16 h-16 border-2 border-gray-300 rounded-lg overflow-hidden hidden">
-                                <img id="photoImg" class="w-full h-full object-cover" alt="Photo Preview">
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
 

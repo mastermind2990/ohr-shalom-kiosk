@@ -10,7 +10,11 @@ class OhrShalomKiosk {
             timeZone: 'America/New_York',
             // Location configuration - default to Orlando, FL using Geoname ID
             geonameId: 4167147, // Orlando, FL
-            locationMethod: 'geoname' // 'geoname' or 'coordinates'
+            locationMethod: 'geoname', // 'geoname' or 'coordinates'
+            // Prayer times - defaults
+            shacharit: '7:00 AM',
+            mincha: '2:00 PM',
+            maariv: '8:00 PM'
         }
         
         // State
@@ -93,11 +97,7 @@ class OhrShalomKiosk {
         document.getElementById('cardPaymentBtn').addEventListener('click', () => {
             this.startCardPayment()
         })
-        
-        // Camera functionality
-        document.getElementById('takePhotoBtn').addEventListener('click', () => {
-            this.takePhoto()
-        })
+
         
         // Modal handlers
         this.setupModalHandlers()
@@ -384,6 +384,8 @@ class OhrShalomKiosk {
                         switch(outcome.type) {
                             case 'success':
                                 showPaymentSuccessModal(this.selectedAmount, document.getElementById('emailInput').value)
+                                // Auto-capture donation photo
+                                this.autoCaptureDonationPhoto(this.selectedAmount, document.getElementById('emailInput').value)
                                 break
                             case 'requires_authentication':
                                 showAuthenticationModal(this.selectedAmount, document.getElementById('emailInput').value)
@@ -542,10 +544,11 @@ class OhrShalomKiosk {
         })
     }
     
-    async takePhoto() {
+    async autoCaptureDonationPhoto(amount, email) {
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                throw new Error('Camera not supported')
+                console.log('Camera not available for auto-capture')
+                return
             }
             
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -573,17 +576,28 @@ class OhrShalomKiosk {
             // Stop camera stream
             stream.getTracks().forEach(track => track.stop())
             
-            // Convert to blob and display preview
+            // Convert to blob and send to backend for storage (optional)
             canvas.toBlob(blob => {
-                const url = URL.createObjectURL(blob)
-                document.getElementById('photoImg').src = url
-                document.getElementById('photoPreview').classList.remove('hidden')
-                this.showMessage('Photo captured successfully', 'success')
+                // In production, you could send this to your backend
+                console.log('Donation photo captured silently', {
+                    amount: amount,
+                    email: email,
+                    timestamp: new Date().toISOString(),
+                    photoSize: blob.size
+                })
+                
+                // Optional: Store locally or send to server
+                // const formData = new FormData()
+                // formData.append('photo', blob, `donation-${Date.now()}.jpg`)
+                // formData.append('amount', amount)
+                // formData.append('email', email)
+                // fetch('/api/donation-photo', { method: 'POST', body: formData })
+                
             }, 'image/jpeg', 0.8)
             
         } catch (error) {
-            console.error('Camera error:', error)
-            this.showMessage('Camera unavailable: ' + error.message, 'error')
+            console.log('Auto photo capture failed (silent):', error.message)
+            // Fail silently - don't show error to user
         }
     }
     
@@ -845,7 +859,10 @@ class OhrShalomKiosk {
                     longitude: -81.3792,
                     timeZone: 'America/New_York',
                     geonameId: 4167147, // Orlando, FL
-                    locationMethod: 'geoname'
+                    locationMethod: 'geoname',
+                    shacharit: '7:00 AM',
+                    mincha: '2:00 PM',
+                    maariv: '8:00 PM'
                 }
                 this.showMessage('Settings reset to defaults', 'success')
                 document.body.removeChild(modal)
@@ -1070,7 +1087,9 @@ class OhrShalomKiosk {
             if (candleElement) {
                 const timeSpan = candleElement.querySelector('span:last-child')
                 if (timeSpan) {
-                    timeSpan.textContent = candles.title
+                    // Extract just the time from "Candle lighting: 7:39pm"
+                    const timeMatch = candles.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
+                    timeSpan.textContent = timeMatch ? timeMatch[1] : candles.title
                 }
             }
         } else {
@@ -1092,7 +1111,9 @@ class OhrShalomKiosk {
             if (havdalahElement) {
                 const timeSpan = havdalahElement.querySelector('span:last-child')
                 if (timeSpan) {
-                    timeSpan.textContent = havdalah.title
+                    // Extract just the time from "Havdalah (50 min): 8:46pm"
+                    const timeMatch = havdalah.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
+                    timeSpan.textContent = timeMatch ? timeMatch[1] : havdalah.title
                 }
             }
         } else {
@@ -1144,7 +1165,7 @@ class OhrShalomKiosk {
 
 // Initialize the kiosk when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new OhrShalomKiosk()
+    window.kioskInstance = new OhrShalomKiosk()
 })
 
 // Kiosk mode helpers
@@ -1257,6 +1278,10 @@ function showAuthenticationModal(selectedAmount, email) {
                 // Simulate verification success (80% success rate)
                 if (Math.random() < 0.8) {
                     showPaymentSuccessModal(selectedAmount, email)
+                    // Auto-capture donation photo
+                    if (window.kioskInstance) {
+                        window.kioskInstance.autoCaptureDonationPhoto(selectedAmount, email)
+                    }
                 } else {
                     showPaymentFailureModal('Authentication failed. Please try again or contact your bank.')
                 }
