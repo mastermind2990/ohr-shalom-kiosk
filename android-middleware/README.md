@@ -1,4 +1,6 @@
-# Ohr Shalom Payment Middleware - Android App
+# Ohr Shalom Payment Middleware
+
+🚀 **GitHub Actions Ready**: Automated APK building configured - see GITHUB_ACTIONS_SETUP.md - Android App
 
 This Android application serves as a payment middleware for the Ohr Shalom Donation Kiosk, enabling NFC Tap to Pay functionality using the Stripe Android SDK.
 
