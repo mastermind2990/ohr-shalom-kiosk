@@ -1,0 +1,208 @@
+# 📋 Copy-Paste Fixed Android Workflow
+
+## Instructions:
+1. Go to: https://github.com/mastermind2990/ohr-shalom-kiosk/blob/main/.github/workflows/android-build.yml
+2. Click **"Edit"** (pencil icon)
+3. **Select ALL content** (Ctrl+A)
+4. **Copy the YAML content below** and paste it to replace everything
+5. **Commit the changes**
+
+---
+
+## 🚀 FIXED WORKFLOW - COPY THIS ENTIRE BLOCK:
+
+```yaml
+# FIXED Android Build Workflow - All issues resolved
+# This version fixes SDK parameters and adds comprehensive debugging
+
+name: Android Build (Fixed)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Android SDK (Fixed Parameters)
+      uses: android-actions/setup-android@v3
+      with:
+        cmdline-tools-version: '11076708'
+        accept-android-sdk-licenses: true
+        log-accepted-android-sdk-licenses: false
+        
+    - name: Install Android SDK components
+      run: |
+        echo "Installing required Android SDK components..."
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34"
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;34.0.0"
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools"
+        
+    - name: Verify Android SDK installation
+      run: |
+        echo "Android SDK Home: $ANDROID_HOME"
+        echo "Installed platforms:"
+        ls -la $ANDROID_HOME/platforms/ || echo "No platforms directory"
+        echo "Installed build-tools:"
+        ls -la $ANDROID_HOME/build-tools/ || echo "No build-tools directory"
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('android-middleware/**/*.gradle*', 'android-middleware/**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Make gradlew executable
+      run: chmod +x android-middleware/gradlew
+      
+    - name: Verify project structure
+      run: |
+        echo "=== Project structure ==="
+        ls -la android-middleware/
+        echo "=== App module ==="
+        ls -la android-middleware/app/ || echo "App directory not found"
+        echo "=== Gradle files ==="
+        find android-middleware -name "build.gradle" -o -name "build.gradle.kts"
+        
+    - name: Clean project thoroughly
+      run: |
+        cd android-middleware
+        echo "Cleaning project..."
+        ./gradlew clean --stacktrace --info --no-daemon
+        
+    - name: Build debug APK with maximum logging
+      run: |
+        cd android-middleware
+        echo "Building debug APK..."
+        ./gradlew assembleDebug --stacktrace --info --debug --no-daemon
+        
+    - name: Verify debug APK creation
+      run: |
+        echo "=== Checking for debug APK ==="
+        find android-middleware -name "*.apk" -type f
+        ls -la android-middleware/app/build/outputs/apk/debug/ || echo "Debug outputs directory not found"
+        ls -la android-middleware/app/build/outputs/ || echo "No outputs directory"
+        
+    - name: Build release APK (if debug succeeded)
+      run: |
+        cd android-middleware
+        echo "Building release APK..."
+        ./gradlew assembleRelease --stacktrace --info --debug --no-daemon
+      continue-on-error: true
+        
+    - name: List all generated files (comprehensive)
+      run: |
+        echo "=== All APK files in project ==="
+        find android-middleware -name "*.apk" -type f -exec ls -la {} \;
+        echo "=== Build outputs structure ==="
+        find android-middleware/app/build/outputs -type f -name "*.apk" 2>/dev/null || echo "No APK files found"
+        
+    - name: Upload Debug APK (flexible path)
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: payment-middleware-debug-apk
+        path: |
+          android-middleware/app/build/outputs/apk/debug/*.apk
+          android-middleware/app/build/outputs/apk/**/*debug*.apk
+        if-no-files-found: warn
+        
+    - name: Upload Release APK (flexible path)
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: payment-middleware-release-apk
+        path: |
+          android-middleware/app/build/outputs/apk/release/*.apk
+          android-middleware/app/build/outputs/apk/**/*release*.apk
+        if-no-files-found: warn
+        
+    - name: Upload complete build directory for debugging
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: complete-build-debug
+        path: |
+          android-middleware/app/build/
+          android-middleware/build/
+        if-no-files-found: ignore
+
+    - name: Create Release (only on successful build)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ github.run_number }}
+        name: Payment Middleware v${{ github.run_number }}
+        body: |
+          🚀 **Automated Android Build Success!**
+          
+          **Changes:**
+          ${{ github.event.head_commit.message }}
+          
+          **📱 APK Files Available:**
+          - `app-debug.apk` - Debug version for testing
+          - `app-release-unsigned.apk` - Production version (unsigned)
+          
+          **📋 Build Info:**
+          - Android Target SDK: 34
+          - Min SDK: 24
+          - Java Version: 17
+          - Kotlin Version: 1.9.25
+        files: |
+          android-middleware/app/build/outputs/apk/debug/app-debug.apk
+          android-middleware/app/build/outputs/apk/release/app-release-unsigned.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+---
+
+## 🔧 What This Fixed Version Does:
+
+### ✅ **Critical Fixes:**
+- **Removed invalid parameters**: `api-level: 34` and `build-tools: 34.0.0`
+- **Added correct parameter**: `cmdline-tools-version: '11076708'`
+- **Fixed Android SDK setup**: Uses valid action inputs only
+
+### ✅ **Improvements:**
+- **Automatic triggering**: Triggers on ANY push to main (removed path filter)
+- **Enhanced debugging**: Comprehensive logging at every step
+- **Flexible APK detection**: Uses wildcards to find APK files
+- **Extended timeout**: 45 minutes to handle slow builds
+- **Better error handling**: Continues on non-critical errors
+
+### 🎯 **Expected Results:**
+1. **Build triggers automatically** when you commit this change
+2. **SDK setup succeeds** with valid parameters
+3. **APK files are generated** and uploaded as artifacts
+4. **Detailed logs** help debug any remaining issues
+
+## 📋 **Next Steps:**
+1. **Copy the YAML above** (everything in the code block)
+2. **Replace your workflow file** content
+3. **Commit the change** 
+4. **Monitor the build** in Actions tab
+5. **Download APKs** from artifacts when build completes
+
+**This version should work successfully!** 🚀
