@@ -41,9 +41,10 @@
 - Traditional card input via Stripe Elements
 
 ## 🌐 Live URLs
+- **Production**: https://ohr-shalom-kiosk.pages.dev
 - **Development**: https://3000-icgy6i2trcgm5190jdfl7-6532622b.e2b.dev
-- **Health Check**: https://3000-icgy6i2trcgm5190jdfl7-6532622b.e2b.dev/api/health
-- **GitHub**: *To be configured*
+- **Health Check**: https://ohr-shalom-kiosk.pages.dev/api/health
+- **GitHub**: https://github.com/mastermind2990/ohr-shalom-kiosk
 
 ## 📊 API Endpoints
 
@@ -100,10 +101,11 @@
 ## 🚀 Deployment
 
 ### Current Status
-- **Platform**: Development server (Hono + Wrangler Pages Dev)
-- **Status**: ✅ Active and functional
+- **Platform**: Cloudflare Pages (Production) + Development Server
+- **Status**: ✅ Live and fully functional
 - **Tech Stack**: Hono + TypeScript + TailwindCSS + Stripe.js
-- **Last Updated**: August 20, 2025
+- **Auto-Deployment**: ✅ Enabled via GitHub integration
+- **Last Updated**: August 21, 2025
 
 ### Production Deployment Ready
 - **Target Platform**: Cloudflare Pages
