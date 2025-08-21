@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Exclude sensitive data from cloud backup -->
+        <exclude domain="sharedpref" path="stripe_keys.xml" />
+        <exclude domain="database" path="payments.db" />
+    </cloud-backup>
+    <device-transfer>
+        <!-- Include necessary data for device transfer -->
+        <include domain="sharedpref" path="app_preferences.xml" />
+    </device-transfer>
+</data-extraction-rules>

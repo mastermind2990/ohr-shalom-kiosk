@@ -50,6 +50,73 @@ app.post('/api/create-payment-intent', async (c) => {
   }
 })
 
+// Stripe Terminal API endpoints for Android middleware
+app.post('/api/stripe/connection-token', async (c) => {
+  try {
+    // For production, you would create a connection token using your Stripe secret key:
+    // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+    // const connectionToken = await stripe.terminal.connectionTokens.create()
+    // return c.json({ secret: connectionToken.secret })
+    
+    // For demo purposes, return a mock connection token
+    const mockConnectionToken = {
+      secret: 'pst_test_' + Math.random().toString(36).substring(7) + '_mock_connection_token'
+    }
+    
+    console.log('Created mock connection token for Android middleware')
+    return c.json(mockConnectionToken)
+  } catch (error) {
+    console.error('Connection token creation error:', error)
+    return c.json({ error: 'Failed to create connection token' }, 500)
+  }
+})
+
+app.post('/api/stripe/payment-intents', async (c) => {
+  try {
+    const { amount, currency = 'usd', email, automatic_payment_methods } = await c.req.json()
+    
+    // Validate amount
+    if (!amount || amount < 50) { // Minimum $0.50
+      return c.json({ error: 'Invalid amount. Minimum $0.50 required.' }, 400)
+    }
+    
+    // For production deployment, you would use your Stripe secret key:
+    // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+    // const paymentIntent = await stripe.paymentIntents.create({
+    //   amount: amount,
+    //   currency: currency,
+    //   receipt_email: email || undefined,
+    //   payment_method_types: ['card_present'], // Required for Terminal
+    //   capture_method: 'automatic',
+    //   metadata: {
+    //     source: 'ohr_shalom_kiosk_terminal',
+    //     integration: 'android_middleware'
+    //   }
+    // })
+    // return c.json({ 
+    //   client_secret: paymentIntent.client_secret,
+    //   id: paymentIntent.id,
+    //   amount: paymentIntent.amount,
+    //   currency: paymentIntent.currency
+    // })
+    
+    // For demo purposes, return a mock payment intent for Terminal
+    const mockPaymentIntent = {
+      client_secret: 'pi_mock_' + Math.random().toString(36).substring(7) + '_secret_mock',
+      id: 'pi_mock_' + Math.random().toString(36).substring(7),
+      amount: amount,
+      currency: currency,
+      status: 'requires_payment_method'
+    }
+    
+    console.log(`Created mock payment intent for Android middleware: $${amount/100}`)
+    return c.json(mockPaymentIntent)
+  } catch (error) {
+    console.error('Payment intent creation error:', error)
+    return c.json({ error: 'Failed to create payment intent' }, 500)
+  }
+})
+
 // API route for Stripe Terminal readers (Tap to Pay)
 app.get('/api/terminal/readers', async (c) => {
   try {

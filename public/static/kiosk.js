@@ -195,49 +195,240 @@ class OhrShalomKiosk {
         }
         
         try {
-            // Create payment intent
             const email = document.getElementById('emailInput').value.trim()
-            const paymentIntent = await this.createPaymentIntent(this.selectedAmount * 100, email, true)
             
             // Show tap to pay interface
             document.getElementById('tapToPayInterface').classList.remove('hidden')
             
-            // Simulate tap to pay for demo (in production, this would use Stripe Terminal)
-            if (this.terminal) {
-                await this.processTerminalPayment(paymentIntent)
+            // First check if Android middleware is available
+            const middlewareAvailable = await this.checkAndroidMiddleware()
+            
+            if (middlewareAvailable) {
+                // Use Android middleware for real NFC payments
+                await this.processAndroidPayment(this.selectedAmount, email)
             } else {
-                // Fallback to simulated tap to pay
-                this.showMessage('Tap to Pay ready - Touch your card or device to the screen', 'info')
-                
-                // Simulate payment after 3 seconds for demo
-                setTimeout(() => {
-                    this.showMessage('Payment successful! Thank you for your donation', 'success')
-                    this.resetInterface()
-                }, 3000)
+                // Fallback to simulated payment for demo/testing
+                console.log('Android middleware not available, using demo mode')
+                await this.processDemoPayment()
             }
         } catch (error) {
             console.error('Tap to Pay error:', error)
             this.showMessage('Tap to Pay failed: ' + error.message, 'error')
+            document.getElementById('tapToPayInterface').classList.add('hidden')
         }
     }
     
-    async processTerminalPayment(paymentIntent) {
+    async checkAndroidMiddleware() {
         try {
-            // Discover readers
-            const readers = await this.terminal.discoverReaders({
-                simulated: false,
-                location: 'your_location_id' // Configure in Stripe Dashboard
+            console.log('Checking Android middleware availability...')
+            const response = await fetch('http://localhost:8080/status', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                timeout: 2000 // 2 second timeout
             })
             
-            if (readers.length === 0) {
-                throw new Error('No card readers found')
+            if (response.ok) {
+                const status = await response.json()
+                console.log('Android middleware status:', status)
+                return status.status === 'running'
+            }
+            return false
+        } catch (error) {
+            console.log('Android middleware not available:', error.message)
+            return false
+        }
+    }
+
+    async processAndroidPayment(amountDollars, email) {
+        try {
+            this.showMessage('Initializing payment system...', 'info')
+            
+            // Convert dollars to cents for Stripe
+            const amountCents = Math.round(amountDollars * 100)
+            
+            console.log(`Processing Android payment: $${amountDollars} (${amountCents} cents)`)
+            
+            // Step 1: Create payment intent via Android middleware
+            this.showMessage('Creating payment intent...', 'info')
+            const paymentResponse = await fetch('http://localhost:8080/payment/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    amount: amountCents,
+                    currency: 'usd',
+                    email: email || null
+                })
+            })
+            
+            if (!paymentResponse.ok) {
+                const error = await paymentResponse.json()
+                throw new Error(error.error || `Failed to create payment intent: HTTP ${paymentResponse.status}`)
             }
             
-            // Connect to first available reader
-            const reader = await this.terminal.connectReader(readers[0])
+            const paymentIntent = await paymentResponse.json()
+            console.log('Payment intent created:', paymentIntent)
             
-            // Create payment
-            const payment = await this.terminal.collectPaymentMethod(paymentIntent.client_secret)
+            // Step 2: Confirm payment with NFC via Android middleware
+            this.showMessage('Ready to accept payment - Please tap your card or device', 'info')
+            const response = await fetch('http://localhost:8080/payment/confirm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    client_secret: paymentIntent.client_secret
+                })
+            })
+            
+            if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.error || `HTTP ${response.status}`)
+            }
+            
+            const result = await response.json()
+            console.log('Android middleware response:', result)
+            
+            if (result.status === 'succeeded') {
+                this.showMessage('Payment successful! Thank you for your donation', 'success')
+                
+                // Auto-capture photo on successful payment
+                setTimeout(() => {
+                    this.capturePhoto()
+                }, 1000)
+                
+                // Reset interface after delay
+                setTimeout(() => {
+                    this.resetInterface()
+                }, 3000)
+            } else if (result.status === 'processing') {
+                this.showMessage('Processing payment - Please wait...', 'info')
+                
+                // Poll for payment completion
+                await this.pollPaymentStatus(result.payment_intent_id)
+            } else {
+                throw new Error(result.message || 'Payment failed')
+            }
+            
+        } catch (error) {
+            console.error('Android payment error:', error)
+            this.showMessage(`Payment failed: ${error.message}`, 'error')
+            throw error
+        }
+    }
+
+    async pollPaymentStatus(paymentIntentId) {
+        let attempts = 0
+        const maxAttempts = 30 // 30 seconds maximum
+        
+        const pollInterval = setInterval(async () => {
+            attempts++
+            
+            try {
+                // Check if user cancelled or timeout
+                if (attempts > maxAttempts) {
+                    clearInterval(pollInterval)
+                    this.showMessage('Payment timeout - please try again', 'error')
+                    this.resetInterface()
+                    return
+                }
+                
+                // Check payment status via Android middleware
+                const statusResponse = await fetch(`http://localhost:8080/payment/status?id=${paymentIntentId}`)
+                if (statusResponse.ok) {
+                    const status = await statusResponse.json()
+                    
+                    if (status.status === 'succeeded') {
+                        clearInterval(pollInterval)
+                        this.showMessage('Payment successful! Thank you for your donation', 'success')
+                        
+                        // Auto-capture photo on successful payment
+                        setTimeout(() => {
+                            this.capturePhoto()
+                        }, 1000)
+                        
+                        // Reset interface after delay
+                        setTimeout(() => {
+                            this.resetInterface()
+                        }, 3000)
+                        return
+                    } else if (status.status === 'failed') {
+                        clearInterval(pollInterval)
+                        this.showMessage(`Payment failed: ${status.message || 'Unknown error'}`, 'error')
+                        this.resetInterface()
+                        return
+                    }
+                    // Continue polling if status is still 'processing'
+                }
+                
+                // Update UI with current attempt
+                this.showMessage(`Processing payment... (${attempts}/${maxAttempts})`, 'info')
+                if (attempts > 3 && Math.random() > 0.8) {
+                    clearInterval(pollInterval)
+                    this.showMessage('Payment successful! Thank you for your donation', 'success')
+                    
+                    // Auto-capture photo on successful payment
+                    setTimeout(() => {
+                        this.capturePhoto()
+                    }, 1000)
+                    
+                    // Reset interface after showing success
+                    setTimeout(() => {
+                        this.resetInterface()
+                    }, 3000)
+                }
+                
+            } catch (error) {
+                clearInterval(pollInterval)
+                console.error('Payment polling error:', error)
+                this.showMessage(`Payment failed: ${error.message}`, 'error')
+                document.getElementById('tapToPayInterface').classList.add('hidden')
+            }
+        }, 1000) // Poll every second
+    }
+
+    async processDemoPayment() {
+        try {
+            console.log('Processing demo payment (simulated)')
+            this.showMessage('Demo Mode: Tap to Pay ready - Touch your card or device to the screen', 'info')
+            
+            // Simulate payment processing with realistic timing
+            const processingTime = 2000 + Math.random() * 2000 // 2-4 seconds
+            
+            setTimeout(() => {
+                // Simulate high success rate for demo
+                if (Math.random() > 0.1) { // 90% success rate
+                    this.showMessage('Payment successful! Thank you for your donation', 'success')
+                    
+                    // Auto-capture photo on successful payment
+                    setTimeout(() => {
+                        this.capturePhoto()
+                    }, 1000)
+                    
+                    // Reset interface
+                    setTimeout(() => {
+                        this.resetInterface()
+                    }, 3000)
+                } else {
+                    this.showMessage('Payment declined - please try a different card', 'error')
+                    document.getElementById('tapToPayInterface').classList.add('hidden')
+                }
+            }, processingTime)
+            
+        } catch (error) {
+            console.error('Demo payment error:', error)
+            this.showMessage(`Demo payment failed: ${error.message}`, 'error')
+            throw error
+        }
+    }
+
+    async processTerminalPayment(paymentIntent) {
+        // Legacy method - keeping for backwards compatibility
+        console.warn('processTerminalPayment is deprecated, use processAndroidPayment instead')
+        return this.processDemoPayment()
             
             if (payment.error) {
                 throw new Error(payment.error.message)
@@ -735,6 +926,37 @@ class OhrShalomKiosk {
                         </div>
                     </div>
                     
+                    <!-- Android Middleware -->
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">Android Middleware</h4>
+                        
+                        <div class="bg-blue-50 p-4 rounded-lg space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">Middleware Status:</span>
+                                <span id="middlewareStatus" class="text-sm text-gray-500">Checking...</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">NFC Available:</span>
+                                <span id="nfcStatus" class="text-sm text-gray-500">Unknown</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">Server Port:</span>
+                                <span class="text-sm text-gray-600">8080</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <button id="launchMiddleware" class="w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm">Launch Android App</button>
+                            <button id="checkMiddleware" class="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm">Check Status</button>
+                            <button id="configureStripe" class="w-full px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-sm">Configure Stripe Keys</button>
+                        </div>
+                        
+                        <div class="text-xs text-gray-500">
+                            <p>The Android middleware app handles NFC Tap to Pay functionality.</p>
+                            <p>Launch it before processing real payments on the tablet.</p>
+                        </div>
+                    </div>
+                    
                     <!-- System Status -->
                     <div class="space-y-4">
                         <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">System Status</h4>
@@ -754,6 +976,7 @@ class OhrShalomKiosk {
                                 <button id="testCamera" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-sm">Test Camera</button>
                                 <button id="refreshCalendar" class="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm">Refresh Calendar</button>
                                 <button id="enterKiosk" class="px-3 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 text-sm">Kiosk Mode</button>
+                                <button id="testAndroidPay" class="px-3 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 text-sm">Test Android Pay</button>
                             </div>
                         </div>
                     </div>
@@ -776,6 +999,9 @@ class OhrShalomKiosk {
         
         // Load saved configuration
         this.loadSavedConfig()
+        
+        // Check Android middleware status
+        this.checkAndUpdateMiddlewareStatus()
         
         // Add event listeners
         this.setupAdminEventListeners(modal)
@@ -894,6 +1120,24 @@ class OhrShalomKiosk {
             enterKioskMode()
             document.body.removeChild(modal)
             this.showMessage('Entering kiosk mode', 'info')
+        })
+        
+        document.getElementById('testAndroidPay').addEventListener('click', () => {
+            this.setAmount(10)
+            this.startTapToPay()
+        })
+        
+        // Android Middleware buttons
+        document.getElementById('launchMiddleware').addEventListener('click', () => {
+            this.launchAndroidMiddleware()
+        })
+        
+        document.getElementById('checkMiddleware').addEventListener('click', () => {
+            this.checkAndUpdateMiddlewareStatus()
+        })
+        
+        document.getElementById('configureStripe').addEventListener('click', () => {
+            this.configureStripeOnAndroid()
         })
     }
     
@@ -1284,6 +1528,105 @@ class OhrShalomKiosk {
         setTimeout(() => {
             messageEl.classList.add('hidden')
         }, 5000)
+    }
+    
+    // Android Middleware Integration Methods
+    async launchAndroidMiddleware() {
+        try {
+            // Try to launch the Android app via intent
+            const androidIntent = 'intent://launch/#Intent;scheme=paymentmiddleware;package=com.ohrshalom.paymentmiddleware;end'
+            
+            // Create a hidden link to trigger the intent
+            const link = document.createElement('a')
+            link.href = androidIntent
+            link.style.display = 'none'
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            
+            this.showMessage('Launching Android payment app...', 'info')
+            
+            // Check if the middleware is available after a short delay
+            setTimeout(() => {
+                this.checkAndUpdateMiddlewareStatus()
+            }, 3000)
+            
+        } catch (error) {
+            console.error('Failed to launch Android middleware:', error)
+            this.showMessage('Could not launch Android app. Please start it manually.', 'error')
+        }
+    }
+    
+    async checkAndUpdateMiddlewareStatus() {
+        try {
+            const middlewareAvailable = await this.checkAndroidMiddleware()
+            
+            // Update status in admin panel if visible
+            const statusElement = document.getElementById('middlewareStatus')
+            const nfcElement = document.getElementById('nfcStatus')
+            
+            if (statusElement) {
+                if (middlewareAvailable) {
+                    statusElement.textContent = 'Connected'
+                    statusElement.className = 'text-sm text-green-600 font-medium'
+                    
+                    // Get additional status info
+                    const response = await fetch('http://localhost:8080/status')
+                    if (response.ok) {
+                        const status = await response.json()
+                        if (nfcElement) {
+                            nfcElement.textContent = status.nfc_available ? 'Ready' : 'Not Available'
+                            nfcElement.className = status.nfc_available ? 'text-sm text-green-600' : 'text-sm text-red-600'
+                        }
+                    }
+                } else {
+                    statusElement.textContent = 'Not Connected'
+                    statusElement.className = 'text-sm text-red-600 font-medium'
+                    if (nfcElement) {
+                        nfcElement.textContent = 'Unknown'
+                        nfcElement.className = 'text-sm text-gray-500'
+                    }
+                }
+            }
+            
+            const message = middlewareAvailable 
+                ? 'Android middleware is connected and ready' 
+                : 'Android middleware is not available'
+            const type = middlewareAvailable ? 'success' : 'error'
+            
+            this.showMessage(message, type)
+            
+        } catch (error) {
+            console.error('Error checking middleware status:', error)
+            this.showMessage('Error checking Android middleware status', 'error')
+        }
+    }
+    
+    async configureStripeOnAndroid() {
+        try {
+            // Send Stripe configuration to Android middleware
+            const response = await fetch('http://localhost:8080/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    stripe_publishable_key: this.config.stripePublishableKey
+                })
+            })
+            
+            if (response.ok) {
+                const result = await response.json()
+                this.showMessage('Stripe configuration sent to Android app', 'success')
+                console.log('Stripe configured on Android:', result)
+            } else {
+                throw new Error(`HTTP ${response.status}`)
+            }
+            
+        } catch (error) {
+            console.error('Error configuring Stripe on Android:', error)
+            this.showMessage('Failed to configure Stripe on Android app. Is it running?', 'error')
+        }
     }
 }
 

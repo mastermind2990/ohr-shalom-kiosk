@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ohr Shalom Payment Middleware</string>
+    
+    <!-- Status messages -->
+    <string name="nfc_not_supported">NFC not supported on this device</string>
+    <string name="nfc_disabled">NFC is disabled</string>
+    <string name="nfc_enabled">NFC is enabled and ready</string>
+    
+    <string name="server_running">HTTP Server running on port %d</string>
+    <string name="server_stopped">HTTP Server is not running</string>
+    
+    <string name="stripe_configured">Stripe SDK configured</string>
+    <string name="stripe_not_configured">Stripe SDK not configured</string>
+    
+    <!-- Buttons -->
+    <string name="enable_nfc">Enable NFC</string>
+    <string name="refresh_status">Refresh Status</string>
+    <string name="test_payment">Test Payment</string>
+    <string name="close">Close</string>
+    
+    <!-- Notifications -->
+    <string name="notification_title">Payment Middleware Active</string>
+    <string name="notification_content">HTTP Server running on port %d</string>
+    <string name="notification_channel_name">Payment Middleware Service</string>
+    <string name="notification_channel_description">Handles payment requests from web kiosk</string>
+</resources>
