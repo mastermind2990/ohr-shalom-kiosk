@@ -1124,49 +1124,36 @@ class OhrShalomKiosk {
             }
         }
         
-        // Calculate additional Sabbath end times based on sunset
-        // Look for sunset time in the API response
-        const today = new Date()
-        const todayStr = today.toISOString().split('T')[0]
+        // Calculate additional Sabbath end times based on Havdalah time
+        // Since Havdalah marks the end of Sabbath, we can use it for calculations
         
-        // Try to find sunset time for calculations
-        let sunsetTime = null
-        for (const item of items) {
-            if (item.date && item.date.includes(todayStr)) {
-                // Look for sunset or shkia in the title
-                if (item.title && item.title.toLowerCase().includes('sunset')) {
-                    const timeMatch = item.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
-                    if (timeMatch) {
-                        sunsetTime = timeMatch[1]
-                        break
-                    }
-                }
-            }
-        }
-        
-        // If we have sunset time, calculate Sabbath end times
-        if (sunsetTime) {
-            // Parse sunset time
-            const sunsetMatch = sunsetTime.match(/(\d{1,2}):(\d{2})\s*([ap]m)/i)
-            if (sunsetMatch) {
-                let hours = parseInt(sunsetMatch[1])
-                const minutes = parseInt(sunsetMatch[2])
-                const period = sunsetMatch[3].toLowerCase()
+        if (havdalah) {
+            // Extract Havdalah time and calculate other times based on typical halacha
+            const havdalahTimeMatch = havdalah.title.match(/(\d{1,2}):(\d{2})\s*([ap]m)/i)
+            
+            if (havdalahTimeMatch) {
+                let havdalahHours = parseInt(havdalahTimeMatch[1])
+                const havdalahMinutes = parseInt(havdalahTimeMatch[2])
+                const period = havdalahTimeMatch[3].toLowerCase()
                 
                 // Convert to 24-hour format
-                if (period === 'pm' && hours !== 12) hours += 12
-                if (period === 'am' && hours === 12) hours = 0
+                if (period === 'pm' && havdalahHours !== 12) havdalahHours += 12
+                if (period === 'am' && havdalahHours === 12) havdalahHours = 0
                 
-                const sunsetDate = new Date()
-                sunsetDate.setHours(hours, minutes, 0, 0)
+                const havdalahDate = new Date()
+                havdalahDate.setHours(havdalahHours, havdalahMinutes, 0, 0)
                 
-                // Calculate Sabbath ends (sunset + 25 minutes approximately)
-                const sabbathEndsDate = new Date(sunsetDate.getTime() + 25 * 60 * 1000)
+                // Calculate Sabbath ends (typically sunset + 3 stars, approximately 25-30 minutes)
+                // This is usually close to but slightly before Havdalah
+                const sabbathEndsDate = new Date(havdalahDate.getTime() - 8 * 60 * 1000) // 8 minutes before Havdalah
                 const sabbathEndsTime = sabbathEndsDate.toLocaleTimeString('en-US', { 
                     hour: 'numeric', 
                     minute: '2-digit', 
                     hour12: true 
                 }).toLowerCase()
+                
+                // Calculate sunset by working backwards from Havdalah (typically Havdalah is ~50 min after sunset)
+                const sunsetDate = new Date(havdalahDate.getTime() - 50 * 60 * 1000)
                 
                 // Calculate 72 minutes after sunset
                 const sabbath72Date = new Date(sunsetDate.getTime() + 72 * 60 * 1000)
@@ -1193,27 +1180,37 @@ class OhrShalomKiosk {
                         timeSpan.textContent = sabbath72Time
                     }
                 }
+            } else {
+                // If we can't parse Havdalah time, fall back
+                this.setFallbackSabbathTimes(havdalah)
             }
         } else {
-            // Fallback: Use Havdalah time if available, or show unavailable
-            const sabbathEndsElement = document.getElementById('sabbathEnds')
-            if (sabbathEndsElement) {
-                const timeSpan = sabbathEndsElement.querySelector('span:last-child')
-                if (timeSpan) {
-                    if (havdalah) {
-                        const timeMatch = havdalah.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
-                        timeSpan.textContent = timeMatch ? timeMatch[1] : 'See Havdalah'
-                    } else {
-                        timeSpan.textContent = 'Not available'
-                    }
+            // No Havdalah this week, set not available
+            this.setFallbackSabbathTimes(null)
+        }
+    }
+    
+    setFallbackSabbathTimes(havdalah) {
+        const sabbathEndsElement = document.getElementById('sabbathEnds')
+        if (sabbathEndsElement) {
+            const timeSpan = sabbathEndsElement.querySelector('span:last-child')
+            if (timeSpan) {
+                if (havdalah) {
+                    timeSpan.textContent = 'See Havdalah'
+                } else {
+                    timeSpan.textContent = 'Not this week'
                 }
             }
-            
-            const sabbath72Element = document.getElementById('sabbath72min')
-            if (sabbath72Element) {
-                const timeSpan = sabbath72Element.querySelector('span:last-child')
-                if (timeSpan) {
-                    timeSpan.textContent = 'Not available'
+        }
+        
+        const sabbath72Element = document.getElementById('sabbath72min')
+        if (sabbath72Element) {
+            const timeSpan = sabbath72Element.querySelector('span:last-child')
+            if (timeSpan) {
+                if (havdalah) {
+                    timeSpan.textContent = 'See Havdalah'
+                } else {
+                    timeSpan.textContent = 'Not this week'
                 }
             }
         }
