@@ -1041,17 +1041,15 @@ class OhrShalomKiosk {
             this.displayHebrewCalendar(data)
         } catch (error) {
             console.error('Failed to load Hebrew calendar:', error)
-            // Set fallback loading text
-            const candleElement = document.getElementById('candleLighting')
-            const havdalahElement = document.getElementById('havdalah')
-            if (candleElement) {
-                const timeSpan = candleElement.querySelector('span:last-child')
-                if (timeSpan) timeSpan.textContent = 'Calendar unavailable'
-            }
-            if (havdalahElement) {
-                const timeSpan = havdalahElement.querySelector('span:last-child')
-                if (timeSpan) timeSpan.textContent = 'Calendar unavailable'
-            }
+            // Set fallback loading text for all Shabbat time elements
+            const sabbatElements = ['candleLighting', 'havdalah', 'sabbathEnds', 'sabbath72min']
+            sabbatElements.forEach(elementId => {
+                const element = document.getElementById(elementId)
+                if (element) {
+                    const timeSpan = element.querySelector('span:last-child')
+                    if (timeSpan) timeSpan.textContent = 'Calendar unavailable'
+                }
+            })
         }
     }
     
@@ -1122,6 +1120,100 @@ class OhrShalomKiosk {
                 const timeSpan = havdalahElement.querySelector('span:last-child')
                 if (timeSpan) {
                     timeSpan.textContent = 'No Havdalah this week'
+                }
+            }
+        }
+        
+        // Calculate additional Sabbath end times based on sunset
+        // Look for sunset time in the API response
+        const today = new Date()
+        const todayStr = today.toISOString().split('T')[0]
+        
+        // Try to find sunset time for calculations
+        let sunsetTime = null
+        for (const item of items) {
+            if (item.date && item.date.includes(todayStr)) {
+                // Look for sunset or shkia in the title
+                if (item.title && item.title.toLowerCase().includes('sunset')) {
+                    const timeMatch = item.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
+                    if (timeMatch) {
+                        sunsetTime = timeMatch[1]
+                        break
+                    }
+                }
+            }
+        }
+        
+        // If we have sunset time, calculate Sabbath end times
+        if (sunsetTime) {
+            // Parse sunset time
+            const sunsetMatch = sunsetTime.match(/(\d{1,2}):(\d{2})\s*([ap]m)/i)
+            if (sunsetMatch) {
+                let hours = parseInt(sunsetMatch[1])
+                const minutes = parseInt(sunsetMatch[2])
+                const period = sunsetMatch[3].toLowerCase()
+                
+                // Convert to 24-hour format
+                if (period === 'pm' && hours !== 12) hours += 12
+                if (period === 'am' && hours === 12) hours = 0
+                
+                const sunsetDate = new Date()
+                sunsetDate.setHours(hours, minutes, 0, 0)
+                
+                // Calculate Sabbath ends (sunset + 25 minutes approximately)
+                const sabbathEndsDate = new Date(sunsetDate.getTime() + 25 * 60 * 1000)
+                const sabbathEndsTime = sabbathEndsDate.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit', 
+                    hour12: true 
+                }).toLowerCase()
+                
+                // Calculate 72 minutes after sunset
+                const sabbath72Date = new Date(sunsetDate.getTime() + 72 * 60 * 1000)
+                const sabbath72Time = sabbath72Date.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit', 
+                    hour12: true 
+                }).toLowerCase()
+                
+                // Update Sabbath Ends
+                const sabbathEndsElement = document.getElementById('sabbathEnds')
+                if (sabbathEndsElement) {
+                    const timeSpan = sabbathEndsElement.querySelector('span:last-child')
+                    if (timeSpan) {
+                        timeSpan.textContent = sabbathEndsTime
+                    }
+                }
+                
+                // Update 72 Minutes
+                const sabbath72Element = document.getElementById('sabbath72min')
+                if (sabbath72Element) {
+                    const timeSpan = sabbath72Element.querySelector('span:last-child')
+                    if (timeSpan) {
+                        timeSpan.textContent = sabbath72Time
+                    }
+                }
+            }
+        } else {
+            // Fallback: Use Havdalah time if available, or show unavailable
+            const sabbathEndsElement = document.getElementById('sabbathEnds')
+            if (sabbathEndsElement) {
+                const timeSpan = sabbathEndsElement.querySelector('span:last-child')
+                if (timeSpan) {
+                    if (havdalah) {
+                        const timeMatch = havdalah.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
+                        timeSpan.textContent = timeMatch ? timeMatch[1] : 'See Havdalah'
+                    } else {
+                        timeSpan.textContent = 'Not available'
+                    }
+                }
+            }
+            
+            const sabbath72Element = document.getElementById('sabbath72min')
+            if (sabbath72Element) {
+                const timeSpan = sabbath72Element.querySelector('span:last-child')
+                if (timeSpan) {
+                    timeSpan.textContent = 'Not available'
                 }
             }
         }
