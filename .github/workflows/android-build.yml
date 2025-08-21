@@ -1,21 +1,19 @@
-# Enhanced Android Build Workflow - Copy this to .github/workflows/android-build.yml
-# This version includes fixes for common build failures
+# FIXED Android Build Workflow - All issues resolved
+# This version fixes SDK parameters and adds comprehensive debugging
 
-name: Android Build (Enhanced)
+name: Android Build (Fixed)
 
 on:
   push:
     branches: [ main ]
-    paths: [ 'android-middleware/**' ]
   pull_request:
     branches: [ main ]
-    paths: [ 'android-middleware/**' ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     
     steps:
     - name: Checkout repository
@@ -27,20 +25,27 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         
-    - name: Setup Android SDK
+    - name: Setup Android SDK (Fixed Parameters)
       uses: android-actions/setup-android@v3
       with:
-        api-level: 34
-        build-tools: 34.0.0
+        cmdline-tools-version: '11076708'
+        accept-android-sdk-licenses: true
+        log-accepted-android-sdk-licenses: false
         
-    - name: Accept Android SDK licenses
-      run: yes | sdkmanager --licenses || true
-      
-    - name: Install required SDK components
+    - name: Install Android SDK components
       run: |
-        sdkmanager --install "platforms;android-34" || true
-        sdkmanager --install "build-tools;34.0.0" || true
-        sdkmanager --install "platform-tools" || true
+        echo "Installing required Android SDK components..."
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34"
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;34.0.0"
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools"
+        
+    - name: Verify Android SDK installation
+      run: |
+        echo "Android SDK Home: $ANDROID_HOME"
+        echo "Installed platforms:"
+        ls -la $ANDROID_HOME/platforms/ || echo "No platforms directory"
+        echo "Installed build-tools:"
+        ls -la $ANDROID_HOME/build-tools/ || echo "No build-tools directory"
         
     - name: Cache Gradle packages
       uses: actions/cache@v4
@@ -52,56 +57,79 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
           
-    - name: Make gradlew executable (fix permissions)
+    - name: Make gradlew executable
       run: chmod +x android-middleware/gradlew
       
-    - name: Clean project (prevent cached issues)
+    - name: Verify project structure
       run: |
-        cd android-middleware
-        ./gradlew clean --stacktrace --info
+        echo "=== Project structure ==="
+        ls -la android-middleware/
+        echo "=== App module ==="
+        ls -la android-middleware/app/ || echo "App directory not found"
+        echo "=== Gradle files ==="
+        find android-middleware -name "build.gradle" -o -name "build.gradle.kts"
         
-    - name: Build debug APK with detailed logging
+    - name: Clean project thoroughly
       run: |
         cd android-middleware
-        ./gradlew assembleDebug --stacktrace --info --no-daemon
+        echo "Cleaning project..."
+        ./gradlew clean --stacktrace --info --no-daemon
         
-    - name: Build release APK with detailed logging
+    - name: Build debug APK with maximum logging
       run: |
         cd android-middleware
-        ./gradlew assembleRelease --stacktrace --info --no-daemon
+        echo "Building debug APK..."
+        ./gradlew assembleDebug --stacktrace --info --debug --no-daemon
+        
+    - name: Verify debug APK creation
+      run: |
+        echo "=== Checking for debug APK ==="
+        find android-middleware -name "*.apk" -type f
+        ls -la android-middleware/app/build/outputs/apk/debug/ || echo "Debug outputs directory not found"
+        ls -la android-middleware/app/build/outputs/ || echo "No outputs directory"
+        
+    - name: Build release APK (if debug succeeded)
+      run: |
+        cd android-middleware
+        echo "Building release APK..."
+        ./gradlew assembleRelease --stacktrace --info --debug --no-daemon
       continue-on-error: true
         
-    - name: List generated APK files (debugging)
+    - name: List all generated files (comprehensive)
       run: |
-        echo "=== Debug APK Location ==="
-        find android-middleware -name "*.apk" -type f
-        ls -la android-middleware/app/build/outputs/apk/debug/ || echo "Debug APK directory not found"
-        ls -la android-middleware/app/build/outputs/apk/release/ || echo "Release APK directory not found"
+        echo "=== All APK files in project ==="
+        find android-middleware -name "*.apk" -type f -exec ls -la {} \;
+        echo "=== Build outputs structure ==="
+        find android-middleware/app/build/outputs -type f -name "*.apk" 2>/dev/null || echo "No APK files found"
         
-    - name: Upload Debug APK
+    - name: Upload Debug APK (flexible path)
       uses: actions/upload-artifact@v4
-      if: success() || failure()
+      if: always()
       with:
         name: payment-middleware-debug-apk
-        path: android-middleware/app/build/outputs/apk/debug/app-debug.apk
+        path: |
+          android-middleware/app/build/outputs/apk/debug/*.apk
+          android-middleware/app/build/outputs/apk/**/*debug*.apk
         if-no-files-found: warn
         
-    - name: Upload Release APK
+    - name: Upload Release APK (flexible path)
       uses: actions/upload-artifact@v4
-      if: success() || failure()
+      if: always()
       with:
         name: payment-middleware-release-apk
-        path: android-middleware/app/build/outputs/apk/release/app-release-unsigned.apk
+        path: |
+          android-middleware/app/build/outputs/apk/release/*.apk
+          android-middleware/app/build/outputs/apk/**/*release*.apk
         if-no-files-found: warn
         
-    - name: Upload build logs on failure
+    - name: Upload complete build directory for debugging
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: build-logs
+        name: complete-build-debug
         path: |
-          android-middleware/app/build/reports/
-          android-middleware/build/reports/
+          android-middleware/app/build/
+          android-middleware/build/
         if-no-files-found: ignore
 
     - name: Create Release (only on successful build)
