@@ -9,14 +9,16 @@
 
 ### ✅ Currently Implemented
 - **Stripe Tap to Pay Integration** - Full NFC support for Android tablets
-- **Hebrew Calendar & Prayer Times** - Real-time data from Hebcal API
-- **Tablet-Optimized Kiosk Interface** - Touch-friendly, responsive design
-- **Admin Access System** - PIN-protected configuration (PIN: 12345)
-- **Camera Photo Capture** - Web-based photo functionality
-- **Multiple Payment Options** - Tap to Pay + traditional card payment
+- **Hebrew Calendar & Prayer Times** - Real-time data from Hebcal API using Orlando, FL location
+- **Tablet-Optimized Kiosk Interface** - Touch-friendly, responsive design  
+- **Admin Access System** - PIN-protected configuration (5 logo taps → PIN: 12345)
+- **Auto Photo Capture** - Silent photo capture on successful donations
+- **Multiple Payment Options** - Tap to Pay + traditional card payment with realistic demo scenarios
 - **Hebrew Text Support** - RTL text rendering with proper fonts
 - **Preset Donation Amounts** - $5, $18 (חי), $36 (Double חי), Custom
 - **Email Receipt Collection** - Optional email input for receipts
+- **Location Flexibility** - Switch between coordinates and HebCal Geoname ID (Orlando: 4167147)
+- **Configurable Prayer Times** - Admin can set custom Shacharit, Mincha, Maariv times
 
 ### 🔧 Technical Features
 - **Kiosk Mode Optimizations** - Fullscreen, disabled right-click, selection prevention
@@ -86,9 +88,13 @@
 4. **Complete Payment**: Follow on-screen prompts for confirmation
 
 ### For Administrators
-1. **Access Admin Mode**: Tap the logo 5 times quickly
+1. **Access Admin Mode**: Tap the logo 5 times quickly (no visual indication)
 2. **Enter PIN**: Use default PIN `12345` (configurable)
-3. **Configure Settings**: Adjust location, prayer times, backend URL
+3. **Configure Settings**: 
+   - **Location Method**: Switch between Latitude/Longitude and HebCal Geoname ID
+   - **Prayer Times**: Set custom times for daily prayers
+   - **Organization**: Update name, logo, timezone
+   - **Quick Actions**: Test payment, camera, refresh calendar, enter kiosk mode
 4. **Monitor Operations**: View payment status and system health
 
 ## 🚀 Deployment
@@ -136,9 +142,10 @@ curl http://localhost:3000/api/health
 
 ### Default Settings
 - **Admin PIN**: `12345` (change in production)
-- **Location**: Orlando, FL coordinates
+- **Location**: Orlando, FL (Geoname ID: 4167147)
+- **Location Method**: HebCal Geoname ID (switchable to coordinates)
 - **Timezone**: America/New_York
-- **Prayer Times**: Configurable in admin panel
+- **Prayer Times**: Shacharit 7:00 AM, Mincha 2:00 PM, Maariv 8:00 PM (configurable)
 
 ### Production Security
 - **Environment Variables**: Store sensitive keys securely
