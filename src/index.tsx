@@ -342,8 +342,18 @@ app.get('/', (c) => {
                             <div class="space-y-1 text-sm">
                                 <div id="candleLighting" class="flex items-center justify-between">
                                     <div class="flex items-center">
-                                        <span class="text-yellow-600 mr-2 text-base" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;">🕯️🕯️</span>
+                                        <img src="https://page.gensparksite.com/v1/base64_upload/7942de6656cf5f4113b974e156f0a084" 
+                                             alt="Shabbat Candles" 
+                                             class="w-6 h-6 mr-2 object-contain"
+                                             style="background: transparent;">
                                         <span class="font-medium">Candle Lighting</span>
+                                    </div>
+                                    <span class="text-gray-700">Loading...</span>
+                                </div>
+                                <div id="eighteenMin" class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-star w-4 text-blue-600 mr-2"></i>
+                                        <span class="font-medium">18 Min</span>
                                     </div>
                                     <span class="text-gray-700">Loading...</span>
                                 </div>
@@ -354,17 +364,10 @@ app.get('/', (c) => {
                                     </div>
                                     <span class="text-gray-700">Loading...</span>
                                 </div>
-                                <div id="sabbathEnds" class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-star w-4 text-blue-600 mr-2"></i>
-                                        <span class="font-medium">Sabbath Ends</span>
-                                    </div>
-                                    <span class="text-gray-700">Loading...</span>
-                                </div>
-                                <div id="sabbath72min" class="flex items-center justify-between">
+                                <div id="seventytwoMin" class="flex items-center justify-between">
                                     <div class="flex items-center">
                                         <i class="fas fa-clock w-4 text-indigo-600 mr-2"></i>
-                                        <span class="font-medium">72 Minutes</span>
+                                        <span class="font-medium">72min</span>
                                     </div>
                                     <span class="text-gray-700">Loading...</span>
                                 </div>
