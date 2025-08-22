@@ -53,8 +53,8 @@ class OhrShalomKiosk {
         this.updateDateTime()
         this.updatePrayerTimesDisplay()
         
-        // Update time every minute
-        setInterval(() => this.updateDateTime(), 60000)
+        // Update time every second for current time, every minute for date
+        setInterval(() => this.updateDateTime(), 1000)
     }
     
     loadConfigurationFromStorage() {
@@ -174,18 +174,38 @@ class OhrShalomKiosk {
     
     setAmount(amount) {
         this.selectedAmount = amount
-        document.getElementById('selectedAmount').textContent = `Amount: $${amount.toFixed(2)}`
-        document.getElementById('tapAmount').textContent = `Amount: $${amount.toFixed(2)}`
         
-        // Highlight selected button
+        // Update amount displays with enhanced formatting
+        document.getElementById('selectedAmount').textContent = `$${amount.toFixed(2)}`
+        document.getElementById('tapAmount').textContent = `$${amount.toFixed(2)}`
+        
+        // Add Hebrew equivalent for special amounts
+        const hebrewAmountEl = document.getElementById('selectedAmountHebrew')
+        if (amount === 18) {
+            hebrewAmountEl.textContent = 'חי (Chai - Life)'
+        } else if (amount === 36) {
+            hebrewAmountEl.textContent = 'Double חי (Double Life)'
+        } else {
+            hebrewAmountEl.textContent = ''
+        }
+        
+        // Add bounce animation to amount container
+        const amountContainer = document.getElementById('selectedAmountContainer')
+        amountContainer.classList.remove('bounce-in')
+        setTimeout(() => amountContainer.classList.add('bounce-in'), 10)
+        
+        // Highlight selected button with enhanced styling
         document.querySelectorAll('.amount-button').forEach(btn => {
-            btn.classList.remove('ring-4', 'ring-yellow-400')
+            btn.classList.remove('ring-4', 'ring-yellow-400', 'success-glow')
         })
         
         const selectedBtn = document.querySelector(`[data-amount="${amount}"]`)
         if (selectedBtn) {
-            selectedBtn.classList.add('ring-4', 'ring-yellow-400')
+            selectedBtn.classList.add('ring-4', 'ring-yellow-400', 'success-glow')
         }
+        
+        // Show success message for amount selection
+        this.showMessage(`Selected donation: $${amount.toFixed(2)}`, 'success', 2000)
     }
     
     async startTapToPay() {
@@ -197,8 +217,9 @@ class OhrShalomKiosk {
         try {
             const email = document.getElementById('emailInput').value.trim()
             
-            // Show tap to pay interface
+            // Show tap to pay interface with animation
             document.getElementById('tapToPayInterface').classList.remove('hidden')
+            document.getElementById('tapToPayInterface').classList.add('slide-up')
             
             // First check if Android middleware is available
             const middlewareAvailable = await this.checkAndroidMiddleware()
@@ -209,7 +230,7 @@ class OhrShalomKiosk {
             } else {
                 // Fallback to simulated payment for demo/testing
                 console.log('Android middleware not available, using demo mode')
-                await this.processDemoPayment()
+                await this.processDemoPayment(this.selectedAmount, email)
             }
         } catch (error) {
             console.error('Tap to Pay error:', error)
@@ -390,37 +411,55 @@ class OhrShalomKiosk {
         }, 1000) // Poll every second
     }
 
-    async processDemoPayment() {
+    async processDemoPayment(amount, email) {
         try {
-            console.log('Processing demo payment (simulated)')
-            this.showMessage('Demo Mode: Tap to Pay ready - Touch your card or device to the screen', 'info')
+            console.log('Processing demo payment (simulated) for $' + amount)
+            this.showMessage('Demo Mode: Ready for Tap to Pay', 'info')
             
-            // Simulate payment processing with realistic timing
-            const processingTime = 2000 + Math.random() * 2000 // 2-4 seconds
+            // Step 1: Show processing interface after a brief delay
+            setTimeout(() => {
+                document.getElementById('tapToPayInterface').classList.add('hidden')
+                document.getElementById('processingInterface').classList.remove('hidden')
+                document.getElementById('processingInterface').classList.add('slide-up')
+                this.showMessage('Processing your donation...', 'info')
+            }, 2000)
+            
+            // Step 2: Complete processing and show success
+            const processingTime = 4000 + Math.random() * 2000 // 4-6 seconds total
             
             setTimeout(() => {
                 // Simulate high success rate for demo
-                if (Math.random() > 0.1) { // 90% success rate
-                    this.showMessage('Payment successful! Thank you for your donation', 'success')
+                if (Math.random() > 0.05) { // 95% success rate
+                    // Hide processing, show success
+                    document.getElementById('processingInterface').classList.add('hidden')
+                    document.getElementById('successInterface').classList.remove('hidden')
+                    document.getElementById('successInterface').classList.add('bounce-in')
+                    document.getElementById('successAmount').textContent = `$${amount.toFixed(2)}`
+                    
+                    this.showMessage('Payment successful! Thank you for your generosity', 'success')
                     
                     // Auto-capture photo on successful payment
                     setTimeout(() => {
                         this.capturePhoto()
-                    }, 1000)
+                    }, 1500)
                     
-                    // Reset interface
+                    // Reset interface after showing success
                     setTimeout(() => {
                         this.resetInterface()
-                    }, 3000)
+                    }, 5000)
+                    
                 } else {
+                    // Payment failed
+                    document.getElementById('processingInterface').classList.add('hidden')
                     this.showMessage('Payment declined - please try a different card', 'error')
-                    document.getElementById('tapToPayInterface').classList.add('hidden')
+                    this.resetInterface()
                 }
             }, processingTime)
             
         } catch (error) {
             console.error('Demo payment error:', error)
             this.showMessage(`Demo payment failed: ${error.message}`, 'error')
+            this.resetInterface()
             throw error
         }
     }
@@ -724,15 +763,35 @@ class OhrShalomKiosk {
     
     resetInterface() {
         this.selectedAmount = 0
-        document.getElementById('selectedAmount').textContent = 'Amount: $0.00'
-        document.getElementById('tapAmount').textContent = 'Amount: $0.00'
-        document.getElementById('emailInput').value = ''
-        document.getElementById('tapToPayInterface').classList.add('hidden')
         
-        // Remove button highlights
+        // Reset amount displays
+        document.getElementById('selectedAmount').textContent = '$0.00'
+        document.getElementById('tapAmount').textContent = '$0.00'
+        document.getElementById('selectedAmountHebrew').textContent = ''
+        
+        // Clear email input
+        document.getElementById('emailInput').value = ''
+        
+        // Hide all payment interfaces
+        document.getElementById('tapToPayInterface').classList.add('hidden')
+        document.getElementById('processingInterface').classList.add('hidden')
+        document.getElementById('successInterface').classList.add('hidden')
+        
+        // Remove all animations and highlights
         document.querySelectorAll('.amount-button').forEach(btn => {
-            btn.classList.remove('ring-4', 'ring-yellow-400')
+            btn.classList.remove('ring-4', 'ring-yellow-400', 'success-glow')
         })
+        
+        // Remove animation classes from containers
+        const containers = ['selectedAmountContainer', 'tapToPayInterface', 'processingInterface', 'successInterface']
+        containers.forEach(containerId => {
+            const element = document.getElementById(containerId)
+            if (element) {
+                element.classList.remove('bounce-in', 'slide-up', 'success-glow')
+            }
+        })
+        
+        console.log('Interface reset to initial state')
     }
     
     async autoCaptureDonationPhoto(amount, email) {
@@ -1497,7 +1556,23 @@ class OhrShalomKiosk {
     
     updateDateTime() {
         const now = new Date()
-        const options = {
+        
+        // Update current time display
+        const timeOptions = {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZone: this.config.timeZone,
+            hour12: true
+        }
+        
+        const currentTimeEl = document.getElementById('currentTime')
+        if (currentTimeEl) {
+            currentTimeEl.textContent = now.toLocaleTimeString('en-US', timeOptions)
+        }
+        
+        // Update date display
+        const dateOptions = {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -1505,8 +1580,10 @@ class OhrShalomKiosk {
             timeZone: this.config.timeZone
         }
         
-        document.getElementById('gregorianDate').textContent = 
-            now.toLocaleDateString('en-US', options)
+        const gregorianDateEl = document.getElementById('gregorianDate')
+        if (gregorianDateEl) {
+            gregorianDateEl.textContent = now.toLocaleDateString('en-US', dateOptions)
+        }
     }
     
     showMessage(message, type = 'info') {

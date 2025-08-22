@@ -283,14 +283,53 @@ app.get('/', (c) => {
                 display: none;
             }
             
-            /* Pulse animation for tap to pay */
+            /* Enhanced animations */
             .pulse-animation {
                 animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
             }
             
+            .bounce-in {
+                animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            }
+            
+            .slide-up {
+                animation: slideUp 0.5s ease-out;
+            }
+            
+            .success-glow {
+                animation: successGlow 2s ease-in-out;
+                box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+            }
+            
+            .processing-spin {
+                animation: spin 1s linear infinite;
+            }
+            
             @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: .5; }
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: .7; transform: scale(1.05); }
+            }
+            
+            @keyframes bounceIn {
+                0% { transform: scale(0.3); opacity: 0; }
+                50% { transform: scale(1.1); opacity: 0.8; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            
+            @keyframes slideUp {
+                0% { transform: translateY(30px); opacity: 0; }
+                100% { transform: translateY(0); opacity: 1; }
+            }
+            
+            @keyframes successGlow {
+                0% { box-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
+                50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.8); }
+                100% { box-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
             }
             
             /* Hebrew text support */
@@ -305,6 +344,36 @@ app.get('/', (c) => {
                 font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;
                 direction: ltr;
                 text-align: left;
+            }
+            
+            /* Interactive elements */
+            .interactive-hover {
+                transition: all 0.3s ease;
+            }
+            
+            .interactive-hover:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            }
+            
+            .donation-amount-display {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 12px;
+                padding: 1rem;
+                text-align: center;
+                margin: 1rem 0;
+                border: 3px solid transparent;
+                background-clip: padding-box;
+            }
+            
+            .success-message {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white;
+                border-radius: 12px;
+                padding: 1.5rem;
+                text-align: center;
+                animation: bounceIn 0.6s ease-out;
             }
             
             /* Enhanced Hebrew font loading */
@@ -347,54 +416,84 @@ app.get('/', (c) => {
                 <div class="landscape-left scroll-container">
 
                     <!-- Date and Calendar Information -->
-                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                    <div class="bg-gradient-to-br from-white to-blue-50 rounded-lg shadow-lg p-4 mb-4 interactive-hover">
                         <h3 class="text-lg font-semibold text-gray-800 mb-3">
-                            <i class="fas fa-calendar mr-2"></i>Today's Date
+                            <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>Today's Date
                         </h3>
-                        <div id="dateInfo" class="space-y-2">
+                        <div id="dateInfo" class="space-y-3">
+                            <!-- Current Time Display -->
+                            <div class="bg-blue-100 rounded-lg p-3 text-center">
+                                <div class="text-xs text-blue-600 font-medium mb-1">Current Time</div>
+                                <div id="currentTime" class="text-2xl font-bold text-blue-800"></div>
+                            </div>
+                            
                             <!-- English Date -->
-                            <div id="gregorianDate" class="text-base font-medium text-gray-800"></div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500 font-medium">Gregorian:</span>
+                                <div id="gregorianDate" class="text-base font-semibold text-gray-800"></div>
+                            </div>
                             
                             <!-- Hebrew Date -->
-                            <div id="hebrewDate" class="text-base font-medium text-gray-700 text-left" 
-                                 style="direction: ltr; text-align: left; font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500 font-medium">Hebrew:</span>
+                                <div id="hebrewDate" class="text-base font-semibold text-gray-700" 
+                                     style="font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
+                            </div>
                             
                             <!-- Parsha of the Week -->
-                            <div class="mt-3 pt-2 border-t border-gray-200">
-                                <div class="text-xs font-medium text-gray-600 mb-1">Parashat HaShavua</div>
-                                <div id="parsha" class="text-xl font-bold text-blue-800 text-left leading-relaxed" 
-                                     style="direction: ltr; text-align: left; font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
+                            <div class="mt-3 pt-3 border-t border-gray-200">
+                                <div class="text-xs font-medium text-gray-600 mb-2 flex items-center">
+                                    <i class="fas fa-book-open mr-1 text-purple-600"></i>
+                                    Parashat HaShavua
+                                </div>
+                                <div id="parsha" class="text-lg font-bold text-purple-800 bg-purple-50 rounded-lg p-2 text-center" 
+                                     style="font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;"></div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Prayer Times -->
-                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                    <div class="bg-gradient-to-br from-white to-green-50 rounded-lg shadow-lg p-4 mb-4 interactive-hover">
                         <h3 class="text-lg font-semibold text-gray-800 mb-3">
-                            <i class="fas fa-pray mr-2"></i>Daily Prayers
+                            <i class="fas fa-pray mr-2 text-green-600"></i>Daily Prayers
                         </h3>
-                        <div class="bg-green-50 p-3 rounded-lg">
-                            <div class="space-y-1 text-sm">
-                                <div id="shacharit" class="flex items-center justify-between">
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-200">
+                            <div class="space-y-2 text-sm">
+                                <div id="shacharit" class="flex items-center justify-between bg-white rounded-lg p-2 shadow-sm">
                                     <div class="flex items-center">
-                                        <i class="fas fa-sun w-4 text-yellow-500 mr-2"></i>
-                                        <span class="font-medium">Shacharit</span>
+                                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas fa-sun text-yellow-600"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-semibold text-gray-800">Shacharit</span>
+                                            <div class="text-xs text-gray-500">Morning Prayer</div>
+                                        </div>
                                     </div>
-                                    <span class="text-gray-700">7:00 AM</span>
+                                    <span class="font-bold text-yellow-700">7:00 AM</span>
                                 </div>
-                                <div id="mincha" class="flex items-center justify-between">
+                                <div id="mincha" class="flex items-center justify-between bg-white rounded-lg p-2 shadow-sm">
                                     <div class="flex items-center">
-                                        <i class="fas fa-sun w-4 text-orange-500 mr-2"></i>
-                                        <span class="font-medium">Mincha</span>
+                                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas fa-sun text-orange-600"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-semibold text-gray-800">Mincha</span>
+                                            <div class="text-xs text-gray-500">Afternoon Prayer</div>
+                                        </div>
                                     </div>
-                                    <span class="text-gray-700">2:00 PM</span>
+                                    <span class="font-bold text-orange-700">2:00 PM</span>
                                 </div>
-                                <div id="maariv" class="flex items-center justify-between">
+                                <div id="maariv" class="flex items-center justify-between bg-white rounded-lg p-2 shadow-sm">
                                     <div class="flex items-center">
-                                        <i class="fas fa-moon w-4 text-indigo-500 mr-2"></i>
-                                        <span class="font-medium">Maariv</span>
+                                        <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas fa-moon text-indigo-600"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-semibold text-gray-800">Maariv</span>
+                                            <div class="text-xs text-gray-500">Evening Prayer</div>
+                                        </div>
                                     </div>
-                                    <span class="text-gray-700">8:00 PM</span>
+                                    <span class="font-bold text-indigo-700">8:00 PM</span>
                                 </div>
                             </div>
                         </div>
@@ -532,24 +631,34 @@ app.get('/', (c) => {
                         
                         <!-- Preset Amount Buttons -->
                         <div class="grid grid-cols-2 gap-3 mb-4">
-                            <button class="amount-button bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors" data-amount="5">
-                                $5
+                            <button class="amount-button bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 interactive-hover" data-amount="5">
+                                <div class="text-2xl font-bold">$5</div>
+                                <div class="text-xs opacity-80">Starter Gift</div>
                             </button>
-                            <button class="amount-button bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors" data-amount="18">
-                                $18<br><small>חי</small>
+                            <button class="amount-button bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-300 interactive-hover" data-amount="18">
+                                <div class="text-2xl font-bold">$18</div>
+                                <div class="text-base hebrew-left">חי</div>
                             </button>
-                            <button class="amount-button bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors" data-amount="36">
-                                $36<br><small>Double חי</small>
+                            <button class="amount-button bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-all duration-300 interactive-hover" data-amount="36">
+                                <div class="text-2xl font-bold">$36</div>
+                                <div class="text-sm hebrew-left">Double חי</div>
                             </button>
-                            <button class="amount-button bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors" id="customAmountBtn">
-                                Custom<br>Amount
+                            <button class="amount-button bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition-all duration-300 interactive-hover" id="customAmountBtn">
+                                <div class="text-xl font-bold">Custom</div>
+                                <div class="text-xs opacity-80">Your Choice</div>
                             </button>
                         </div>
                         
                         <!-- Selected Amount Display -->
                         <div class="text-center mb-4">
-                            <div class="text-2xl font-bold text-gray-800" id="selectedAmount">
-                                Amount: $0.00
+                            <div class="donation-amount-display slide-up" id="selectedAmountContainer">
+                                <div class="text-sm opacity-90 mb-1">Selected Donation</div>
+                                <div class="text-3xl font-bold" id="selectedAmount">
+                                    $0.00
+                                </div>
+                                <div class="text-xs opacity-80 mt-1" id="selectedAmountHebrew">
+                                    <!-- Hebrew equivalent will be shown here -->
+                                </div>
                             </div>
                         </div>
                         
@@ -589,16 +698,47 @@ app.get('/', (c) => {
                         
                         <!-- Tap to Pay Interface -->
                         <div id="tapToPayInterface" class="hidden">
-                            <div class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center bg-blue-50">
-                                <div class="text-4xl mb-3">
+                            <div class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center bg-gradient-to-br from-blue-50 to-indigo-100 interactive-hover">
+                                <div class="text-5xl mb-4">
                                     <i class="fas fa-wifi pulse-animation text-blue-500"></i>
                                 </div>
-                                <h3 class="text-lg font-bold text-blue-800 mb-2">Ready for Tap to Pay</h3>
-                                <p class="text-blue-600 mb-3 text-sm">Hold your contactless card or mobile device near the screen</p>
-                                <div class="text-base font-semibold text-blue-800" id="tapAmount">Amount: $0.00</div>
-                                <button id="cancelTapToPay" class="mt-3 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm">
-                                    Cancel
-                                </button>
+                                <h3 class="text-xl font-bold text-blue-800 mb-3">Ready for Tap to Pay</h3>
+                                <p class="text-blue-600 mb-4 text-sm leading-relaxed">Hold your contactless card or mobile device near the screen</p>
+                                <div class="donation-amount-display mb-4" id="tapAmountContainer">
+                                    <div class="text-2xl font-bold" id="tapAmount">$0.00</div>
+                                </div>
+                                <div class="flex justify-center space-x-4">
+                                    <button id="cancelTapToPay" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all duration-300 text-sm font-semibold">
+                                        <i class="fas fa-times mr-2"></i>Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Processing Interface -->
+                        <div id="processingInterface" class="hidden">
+                            <div class="border-2 border-green-300 rounded-lg p-6 text-center bg-gradient-to-br from-green-50 to-emerald-100">
+                                <div class="text-5xl mb-4">
+                                    <i class="fas fa-credit-card processing-spin text-green-500"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-green-800 mb-3">Processing Payment</h3>
+                                <p class="text-green-600 mb-4 text-sm">Please wait while we process your donation...</p>
+                                <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                    <div class="bg-green-500 h-2 rounded-full animate-pulse" style="width: 70%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Success Interface -->
+                        <div id="successInterface" class="hidden">
+                            <div class="success-message">
+                                <div class="text-5xl mb-4">
+                                    <i class="fas fa-check-circle text-white"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-3">Thank You!</h3>
+                                <p class="text-lg mb-4">Your donation has been processed successfully</p>
+                                <div class="text-xl font-semibold" id="successAmount">$0.00</div>
+                                <p class="text-sm mt-3 opacity-90">May your generosity bring blessings</p>
                             </div>
                         </div>
                     </div>
