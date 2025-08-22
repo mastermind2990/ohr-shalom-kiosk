@@ -542,80 +542,38 @@ app.get('/', (c) => {
                         </div>
                     </div>
                     
-                    <!-- Comprehensive Zmanim -->
-                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-3">
-                            <i class="fas fa-clock mr-2"></i>Detailed Zmanim
+                    <!-- Condensed Zmanim -->
+                    <div class="bg-white rounded-lg shadow-lg p-3 mb-4">
+                        <h3 class="text-base font-semibold text-gray-800 mb-2">
+                            <i class="fas fa-clock mr-1 text-xs"></i>Key Zmanim
                         </h3>
-                        <div class="bg-gray-50 p-3 rounded-lg">
-                            <table class="w-full zmanim-table">
-                                <tbody class="text-xs">
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Alos HaShachar (m"a)</td>
-                                        <td class="text-right text-gray-600">5:44 AM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Earliest Tallis (m"a)</td>
-                                        <td class="text-right text-gray-600">6:13 AM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">HaNetz HaChama</td>
-                                        <td class="text-right text-gray-600">6:57 AM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Sof Zman Shema (m"a)</td>
-                                        <td class="text-right text-gray-600">9:36 AM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Sof Zman Shema (gr"a)</td>
-                                        <td class="text-right text-gray-600">10:13 AM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Sof Zman Tefillah (m"a)</td>
-                                        <td class="text-right text-gray-600">10:53 AM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Sof Zman Tefillah (gr"a)</td>
-                                        <td class="text-right text-gray-600">11:18 AM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Chatzos</td>
-                                        <td class="text-right text-gray-600">1:28 PM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Mincha Gedola (m"a)</td>
-                                        <td class="text-right text-gray-600">2:01 PM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Mincha Ketana (gr"a)</td>
-                                        <td class="text-right text-gray-600">5:16 PM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Plag Mincha (m"a)</td>
-                                        <td class="text-right text-gray-600">6:37 PM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Shkia</td>
-                                        <td class="text-right text-gray-600">7:59 PM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Tzeis 595° (gr"a)</td>
-                                        <td class="text-right text-gray-600">8:23 PM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Tzeis 850°</td>
-                                        <td class="text-right text-gray-600">8:35 PM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Tzeis (42 min)</td>
-                                        <td class="text-right text-gray-600">8:41 PM</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-medium text-gray-700">Tzeis (72 min)</td>
-                                        <td class="text-right text-gray-600">9:11 PM</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="bg-gray-50 p-2 rounded-lg">
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                                <div class="flex justify-between text-xs">
+                                    <span class="font-medium text-gray-700">Sunrise</span>
+                                    <span class="text-gray-600">6:57 AM</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="font-medium text-gray-700">Sunset</span>
+                                    <span class="text-gray-600">7:59 PM</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="font-medium text-gray-700">Shema (GRA)</span>
+                                    <span class="text-gray-600">10:13 AM</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="font-medium text-gray-700">Tefillah (GRA)</span>
+                                    <span class="text-gray-600">11:18 AM</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="font-medium text-gray-700">Chatzos</span>
+                                    <span class="text-gray-600">1:28 PM</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="font-medium text-gray-700">Min. Ketana</span>
+                                    <span class="text-gray-600">5:16 PM</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

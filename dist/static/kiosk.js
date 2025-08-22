@@ -480,24 +480,6 @@ class OhrShalomKiosk {
         // Legacy method - keeping for backwards compatibility
         console.warn('processTerminalPayment is deprecated, use processAndroidPayment instead')
         return this.processDemoPayment()
-            
-            if (payment.error) {
-                throw new Error(payment.error.message)
-            }
-            
-            // Confirm payment
-            const result = await this.stripe.confirmCardPayment(paymentIntent.client_secret)
-            
-            if (result.error) {
-                throw new Error(result.error.message)
-            }
-            
-            this.showMessage('Payment successful! Thank you for your donation', 'success')
-            this.resetInterface()
-            
-        } catch (error) {
-            throw error
-        }
     }
     
     async startCardPayment() {
