@@ -72,9 +72,17 @@ class OhrShalomKiosk {
     
     setupEventListeners() {
         // Logo tap for admin access
-        document.getElementById('logoContainer').addEventListener('click', () => {
-            this.handleLogoTap()
-        })
+        const logoContainer = document.getElementById('logoContainer')
+        if (logoContainer) {
+            console.log('Setting up logo click listener')
+            logoContainer.addEventListener('click', (e) => {
+                console.log('Logo clicked!')
+                e.preventDefault()
+                this.handleLogoTap()
+            })
+        } else {
+            console.error('logoContainer element not found!')
+        }
         
         // Amount selection buttons
         document.querySelectorAll('.amount-button[data-amount]').forEach(button => {
@@ -157,11 +165,15 @@ class OhrShalomKiosk {
         this.tapCount++
         console.log('Logo tapped, count:', this.tapCount)
         
+        // Show visual feedback
+        this.showMessage(`Tap ${this.tapCount}/5 for admin access`, 'info', 1000)
+        
         if (this.tapTimeout) {
             clearTimeout(this.tapTimeout)
         }
         
         this.tapTimeout = setTimeout(() => {
+            console.log('Resetting tap count after timeout')
             this.tapCount = 0
         }, 3000)
         
@@ -1551,76 +1563,71 @@ class OhrShalomKiosk {
     }
     
     displayHebrewCalendar(data) {
+        console.log('Displaying Hebrew calendar data:', data)
         const items = data.items || []
         
-        // Find Hebrew date - look for items with hdate field or that are clearly dates
-        const hebrewDateItem = items.find(item => 
-            item.hdate || (item.hebrew && !item.category && item.date)
-        )
-        if (hebrewDateItem) {
-            const hebrewDateText = hebrewDateItem.hdate || hebrewDateItem.hebrew || ''
-            document.getElementById('hebrewDate').textContent = hebrewDateText
+        // Find parsha first (it contains both Hebrew date and parsha info)
+        const parsha = items.find(item => item.category === 'parashat')
+        
+        // Extract Hebrew date from parsha item
+        if (parsha && parsha.hdate) {
+            const hebrewDateEl = document.getElementById('hebrewDate')
+            if (hebrewDateEl) {
+                hebrewDateEl.textContent = parsha.hdate
+                console.log('Updated Hebrew date to:', parsha.hdate)
+            }
         }
         
-        // Find parsha
-        const parsha = items.find(item => item.category === 'parashat')
-        if (parsha && parsha.hebrew) {
-            document.getElementById('parsha').textContent = parsha.hebrew
-        } else {
-            // If no Hebrew parsha found, try the English title
-            if (parsha && parsha.title) {
-                document.getElementById('parsha').textContent = parsha.title
+        // Extract parsha name
+        if (parsha) {
+            const parshaEl = document.getElementById('parsha')
+            if (parshaEl) {
+                const parshaText = parsha.hebrew || parsha.title || 'No Parsha'
+                parshaEl.textContent = parshaText
+                console.log('Updated Parsha to:', parshaText)
             }
         }
         
         // Find candle lighting
         const candles = items.find(item => 
-            item.title && item.title.toLowerCase().includes('candle')
+            item.category === 'candles' || (item.title && item.title.toLowerCase().includes('candle'))
         )
-        if (candles) {
-            const candleElement = document.getElementById('candleLighting')
-            if (candleElement) {
-                const timeSpan = candleElement.querySelector('span.text-gray-700')
-                if (timeSpan) {
+        console.log('Found candles item:', candles)
+        
+        const candleElement = document.getElementById('candleLighting')
+        if (candleElement) {
+            const timeSpan = candleElement.querySelector('span.text-gray-700')
+            if (timeSpan) {
+                if (candles) {
                     // Extract just the time from "Candle lighting: 7:39pm"
                     const timeMatch = candles.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
                     const timeText = timeMatch ? timeMatch[1] : candles.title
                     timeSpan.textContent = timeText
                     console.log('Updated Candle Lighting time to:', timeText)
-                }
-            }
-        } else {
-            const candleElement = document.getElementById('candleLighting')
-            if (candleElement) {
-                const timeSpan = candleElement.querySelector('span.text-gray-700')
-                if (timeSpan) {
-                    timeSpan.textContent = 'No candle lighting this week'
+                } else {
+                    timeSpan.textContent = 'No candle lighting'
                 }
             }
         }
         
         // Find Havdalah
         const havdalah = items.find(item => 
-            item.title && item.title.toLowerCase().includes('havdalah')
+            item.category === 'havdalah' || (item.title && item.title.toLowerCase().includes('havdalah'))
         )
-        if (havdalah) {
-            const havdalahElement = document.getElementById('havdalah')
-            if (havdalahElement) {
-                const timeSpan = havdalahElement.querySelector('span.text-gray-700')
-                if (timeSpan) {
+        console.log('Found havdalah item:', havdalah)
+        
+        const havdalahElement = document.getElementById('havdalah')
+        if (havdalahElement) {
+            const timeSpan = havdalahElement.querySelector('span.text-gray-700')
+            if (timeSpan) {
+                if (havdalah) {
                     // Extract just the time from "Havdalah (50 min): 8:46pm"
                     const timeMatch = havdalah.title.match(/(\d{1,2}:\d{2}[ap]m)/i)
                     const timeText = timeMatch ? timeMatch[1] : havdalah.title
                     timeSpan.textContent = timeText
                     console.log('Updated Havdalah time to:', timeText)
-                }
-            }
-        } else {
-            const havdalahElement = document.getElementById('havdalah')
-            if (havdalahElement) {
-                const timeSpan = havdalahElement.querySelector('span.text-gray-700')
-                if (timeSpan) {
-                    timeSpan.textContent = 'No Havdalah this week'
+                } else {
+                    timeSpan.textContent = 'No Havdalah'
                 }
             }
         }
@@ -2089,3 +2096,9 @@ function showPaymentFailureModal(message) {
 window.OhrShalomKiosk = OhrShalomKiosk
 window.enterKioskMode = enterKioskMode
 window.exitKioskMode = exitKioskMode
+
+// Initialize the kiosk when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing Ohr Shalom Kiosk')
+    window.kioskInstance = new OhrShalomKiosk()
+})
