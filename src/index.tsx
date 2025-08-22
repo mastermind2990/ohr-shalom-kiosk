@@ -405,6 +405,7 @@ app.get('/', (c) => {
                             style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3); font-family: 'Times New Roman', serif;">
                             ✡ OHR SHALOM ✡
                         </h1>
+                        <!-- Last updated: 2025-01-15 -->
                     </div>
                 </div>
 
