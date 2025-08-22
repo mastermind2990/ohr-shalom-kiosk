@@ -985,6 +985,35 @@ class OhrShalomKiosk {
                         </div>
                     </div>
                     
+                    <!-- Kiosk Mode Controls -->
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">
+                            <i class="fas fa-desktop mr-2 text-purple-600"></i>Kiosk Mode Controls
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button id="enterKioskMode" class="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors">
+                                <i class="fas fa-expand mr-2"></i>Enter Kiosk Mode
+                            </button>
+                            
+                            <button id="exitKioskMode" class="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
+                                <i class="fas fa-compress mr-2"></i>Exit Kiosk Mode
+                            </button>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <div class="text-sm text-yellow-800">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                <strong>Kiosk Mode Instructions:</strong>
+                                <ul class="mt-2 ml-4 space-y-1">
+                                    <li>• <strong>Enter Kiosk Mode</strong>: Enables full-screen mode and disables browser controls</li>
+                                    <li>• <strong>Exit Kiosk Mode</strong>: Returns to normal browser window</li>
+                                    <li>• <strong>Emergency Exit</strong>: Tap logo 5 times → Enter PIN: <code>${this.config.adminPin}</code></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Android Middleware -->
                     <div class="space-y-4">
                         <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">Android Middleware</h4>
@@ -1181,6 +1210,16 @@ class OhrShalomKiosk {
             this.showMessage('Entering kiosk mode', 'info')
         })
         
+        // New kiosk mode controls
+        document.getElementById('enterKioskMode').addEventListener('click', () => {
+            this.enterKioskMode()
+            document.body.removeChild(modal)
+        })
+        
+        document.getElementById('exitKioskMode').addEventListener('click', () => {
+            this.exitKioskMode()
+        })
+        
         document.getElementById('testAndroidPay').addEventListener('click', () => {
             this.setAmount(10)
             this.startTapToPay()
@@ -1270,7 +1309,7 @@ class OhrShalomKiosk {
         // Update Shacharit
         const shacharitElement = document.getElementById('shacharit')
         if (shacharitElement) {
-            const timeSpan = shacharitElement.querySelector('span.text-gray-700')
+            const timeSpan = shacharitElement.querySelector('span.font-bold.text-yellow-700')
             if (timeSpan) {
                 timeSpan.textContent = this.config.shacharit || '7:00 AM'
                 console.log('Updated Shacharit time to:', timeSpan.textContent)
@@ -1280,7 +1319,7 @@ class OhrShalomKiosk {
         // Update Mincha
         const minchaElement = document.getElementById('mincha')
         if (minchaElement) {
-            const timeSpan = minchaElement.querySelector('span.text-gray-700')
+            const timeSpan = minchaElement.querySelector('span.font-bold.text-orange-700')
             if (timeSpan) {
                 timeSpan.textContent = this.config.mincha || '2:00 PM'
                 console.log('Updated Mincha time to:', timeSpan.textContent)
@@ -1290,7 +1329,7 @@ class OhrShalomKiosk {
         // Update Maariv
         const maarivElement = document.getElementById('maariv')
         if (maarivElement) {
-            const timeSpan = maarivElement.querySelector('span.text-gray-700')
+            const timeSpan = maarivElement.querySelector('span.font-bold.text-indigo-700')
             if (timeSpan) {
                 timeSpan.textContent = this.config.maariv || '8:00 PM'
                 console.log('Updated Maariv time to:', timeSpan.textContent)
@@ -1319,21 +1358,143 @@ class OhrShalomKiosk {
         this.hideCustomAmountModal()
     }
     
+    enterKioskMode() {
+        try {
+            // Request fullscreen
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen()
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen()
+            } else if (document.documentElement.msRequestFullscreen) {
+                document.documentElement.msRequestFullscreen()
+            }
+            
+            // Add kiosk mode styles
+            document.body.classList.add('kiosk-mode')
+            
+            // Hide browser UI elements
+            const style = document.createElement('style')
+            style.id = 'kiosk-mode-styles'
+            style.textContent = `
+                .kiosk-mode {
+                    overflow: hidden !important;
+                    user-select: none !important;
+                    -webkit-user-select: none !important;
+                    -moz-user-select: none !important;
+                    -ms-user-select: none !important;
+                }
+                .kiosk-mode * {
+                    -webkit-touch-callout: none !important;
+                    -webkit-user-select: none !important;
+                    -khtml-user-select: none !important;
+                    -moz-user-select: none !important;
+                    -ms-user-select: none !important;
+                    user-select: none !important;
+                }
+                .kiosk-mode input[type="email"], 
+                .kiosk-mode input[type="number"], 
+                .kiosk-mode input[type="password"] {
+                    -webkit-user-select: text !important;
+                    -moz-user-select: text !important;
+                    -ms-user-select: text !important;
+                    user-select: text !important;
+                }
+            `
+            document.head.appendChild(style)
+            
+            // Disable common keyboard shortcuts
+            document.addEventListener('keydown', this.handleKioskKeydown.bind(this))
+            
+            this.showMessage('Kiosk mode enabled. Tap logo 5 times + PIN to exit.', 'success')
+            console.log('Kiosk mode enabled')
+            
+        } catch (error) {
+            console.error('Failed to enter kiosk mode:', error)
+            this.showMessage('Failed to enter kiosk mode: ' + error.message, 'error')
+        }
+    }
+    
+    exitKioskMode() {
+        try {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen()
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen()
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen()
+            }
+            
+            // Remove kiosk mode styles
+            document.body.classList.remove('kiosk-mode')
+            const kioskStyles = document.getElementById('kiosk-mode-styles')
+            if (kioskStyles) {
+                kioskStyles.remove()
+            }
+            
+            // Re-enable keyboard shortcuts
+            document.removeEventListener('keydown', this.handleKioskKeydown.bind(this))
+            
+            this.showMessage('Kiosk mode disabled', 'info')
+            console.log('Kiosk mode disabled')
+            
+        } catch (error) {
+            console.error('Failed to exit kiosk mode:', error)
+            this.showMessage('Failed to exit kiosk mode: ' + error.message, 'error')
+        }
+    }
+    
+    handleKioskKeydown(event) {
+        // Block common shortcuts that could exit kiosk mode
+        const blockedKeys = [
+            'F11', // Fullscreen toggle
+            'F5',  // Refresh
+            'F12', // Developer tools
+            'Escape' // Exit fullscreen
+        ]
+        
+        if (blockedKeys.includes(event.key)) {
+            event.preventDefault()
+            return false
+        }
+        
+        // Block Ctrl+key combinations
+        if (event.ctrlKey) {
+            const ctrlBlockedKeys = ['r', 'R', 'f', 'F', 'w', 'W', 't', 'T', 'n', 'N', 'l', 'L', 'h', 'H', 'j', 'J', 'u', 'U', 'i', 'I', 's', 'S']
+            if (ctrlBlockedKeys.includes(event.key)) {
+                event.preventDefault()
+                return false
+            }
+        }
+        
+        // Block Alt+key combinations
+        if (event.altKey) {
+            event.preventDefault()
+            return false
+        }
+    }
+    
     async loadHebrewCalendar() {
         try {
+            // Ensure we have default values if config is not loaded
+            const geonameId = this.config.geonameId || 4167147 // Orlando, FL default
+            const latitude = this.config.latitude || 28.5383
+            const longitude = this.config.longitude || -81.3792
+            const locationMethod = this.config.locationMethod || 'geoname'
+            
             let url = '/api/hebcal?'
             
             console.log('Loading Hebrew calendar with config:', {
-                geonameId: this.config.geonameId,
-                locationMethod: this.config.locationMethod,
-                latitude: this.config.latitude,
-                longitude: this.config.longitude
+                geonameId,
+                locationMethod,
+                latitude,
+                longitude
             })
             
-            if (this.config.geonameId && this.config.locationMethod === 'geoname') {
-                url += `geonameid=${this.config.geonameId}`
+            if (geonameId && locationMethod === 'geoname') {
+                url += `geonameid=${geonameId}`
             } else {
-                url += `lat=${this.config.latitude}&lon=${this.config.longitude}`
+                url += `lat=${latitude}&lon=${longitude}`
             }
             
             console.log('Hebrew calendar API URL:', url)
@@ -1346,19 +1507,47 @@ class OhrShalomKiosk {
             const data = await response.json()
             console.log('Hebrew calendar API response:', data)
             
+            // Clear loading states before displaying data
+            this.clearLoadingStates()
+            
             this.displayHebrewCalendar(data)
         } catch (error) {
             console.error('Failed to load Hebrew calendar:', error)
-            // Set fallback loading text for all Shabbat time elements
-            const sabbatElements = ['candleLighting', 'eighteenMin', 'havdalah', 'seventytwoMin']
-            sabbatElements.forEach(elementId => {
-                const element = document.getElementById(elementId)
-                if (element) {
-                    const timeSpan = element.querySelector('span.text-gray-700')
-                    if (timeSpan) timeSpan.textContent = 'Calendar unavailable'
-                }
-            })
+            this.setCalendarErrorStates()
         }
+    }
+    
+    clearLoadingStates() {
+        // Clear "Loading..." text from all Shabbat time elements
+        const sabbatElements = ['candleLighting', 'eighteenMin', 'havdalah', 'seventytwoMin']
+        sabbatElements.forEach(elementId => {
+            const element = document.getElementById(elementId)
+            if (element) {
+                const timeSpan = element.querySelector('span.text-gray-700')
+                if (timeSpan && timeSpan.textContent === 'Loading...') {
+                    timeSpan.textContent = 'Calculating...'
+                }
+            }
+        })
+    }
+    
+    setCalendarErrorStates() {
+        // Set fallback error text for all Shabbat time elements
+        const sabbatElements = ['candleLighting', 'eighteenMin', 'havdalah', 'seventytwoMin']
+        sabbatElements.forEach(elementId => {
+            const element = document.getElementById(elementId)
+            if (element) {
+                const timeSpan = element.querySelector('span.text-gray-700')
+                if (timeSpan) timeSpan.textContent = 'Calendar unavailable'
+            }
+        })
+        
+        // Also set fallback Hebrew date and parsha
+        const hebrewDateEl = document.getElementById('hebrewDate')
+        if (hebrewDateEl) hebrewDateEl.textContent = 'Hebrew date unavailable'
+        
+        const parshaEl = document.getElementById('parsha')
+        if (parshaEl) parshaEl.textContent = 'Parsha unavailable'
     }
     
     displayHebrewCalendar(data) {
