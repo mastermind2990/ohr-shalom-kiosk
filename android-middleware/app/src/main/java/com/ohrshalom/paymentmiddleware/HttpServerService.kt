@@ -19,8 +19,11 @@ class HttpServerService : Service() {
     companion object {
         const val TAG = "HttpServerService"
         const val PORT = 8080
+        const val SERVER_PORT = PORT // Alias for MainActivity compatibility
         const val CHANNEL_ID = "PaymentMiddlewareChannel"
         const val NOTIFICATION_ID = 1
+        
+        var isRunning = false
     }
 
     private var httpServer: PaymentHttpServer? = null
@@ -48,6 +51,7 @@ class HttpServerService : Service() {
         try {
             httpServer = PaymentHttpServer(PORT)
             httpServer?.start()
+            isRunning = true
             Log.i(TAG, "HTTP Server started on port $PORT")
         } catch (e: IOException) {
             Log.e(TAG, "Failed to start HTTP server", e)
@@ -56,6 +60,7 @@ class HttpServerService : Service() {
 
     private fun stopHttpServer() {
         httpServer?.stop()
+        isRunning = false
         Log.i(TAG, "HTTP Server stopped")
     }
 

@@ -59,6 +59,11 @@ class MainActivity : AppCompatActivity() {
             btnRefreshStatus.setOnClickListener {
                 checkSystemStatus()
             }
+            
+            // Enter kiosk mode button
+            btnEnterKiosk.setOnClickListener {
+                enterKioskMode()
+            }
         }
     }
 
@@ -127,6 +132,18 @@ class MainActivity : AppCompatActivity() {
     private fun testPayment() {
         Toast.makeText(this, "Test payment functionality coming soon", Toast.LENGTH_SHORT).show()
         // TODO: Implement test payment
+    }
+    
+    private fun enterKioskMode() {
+        Toast.makeText(this, "Entering kiosk mode...", Toast.LENGTH_SHORT).show()
+        
+        // Launch kiosk activity
+        val intent = Intent(this, KioskActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        startActivity(intent)
+        
+        // Finish admin activity
+        finish()
     }
 
     override fun onResume() {

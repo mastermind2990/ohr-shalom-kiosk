@@ -18,6 +18,17 @@
     
     <!-- Wake lock to prevent sleep during payments -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- Kiosk mode permissions -->
+    <uses-permission android:name="android.permission.SYSTEM_UI_VISIBILITY" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
+    
+    <!-- Device admin permissions for enhanced kiosk mode -->
+    <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN" />
+    
+    <!-- Boot receiver permission -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".PaymentMiddlewareApplication"
@@ -38,6 +49,28 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.PaymentMiddleware.NoActionBar"
             android:launchMode="singleTask" />
+        
+        <!-- Kiosk Mode Activity -->
+        <activity
+            android:name=".KioskActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.PaymentMiddleware.Kiosk"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="paymentmiddleware" android:host="kiosk" />
+            </intent-filter>
+        </activity>
         
         <!-- HTTP Server Service -->
         <service
