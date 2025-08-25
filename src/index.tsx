@@ -230,33 +230,45 @@ app.get('/', (c) => {
                 user-select: text;
             }
             
-            /* Landscape tablet optimizations */
+            /* Landscape tablet optimizations - Compact layout */
             @media (orientation: landscape) and (min-width: 768px) {
                 .landscape-grid {
                     display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 1.5rem;
-                    height: calc(100vh - 2rem);
+                    grid-template-columns: 1.2fr 1fr;
+                    gap: 1rem;
+                    height: calc(100vh - 1rem);
+                    max-height: calc(100vh - 1rem);
                 }
                 
                 .landscape-left {
                     overflow-y: auto;
-                    padding-right: 1rem;
+                    padding-right: 0.5rem;
                 }
                 
                 .landscape-right {
                     overflow-y: auto;
-                    padding-left: 1rem;
+                    padding-left: 0.5rem;
                 }
                 
                 .amount-button {
-                    min-height: 70px;
-                    font-size: 20px;
+                    min-height: 65px;
+                    font-size: 18px;
                 }
                 
                 .kiosk-button {
-                    min-height: 55px;
-                    font-size: 16px;
+                    min-height: 50px;
+                    font-size: 15px;
+                }
+                
+                /* Compact sections for landscape */
+                .compact-section {
+                    padding: 0.75rem !important;
+                    margin-bottom: 0.75rem !important;
+                }
+                
+                .compact-section h3 {
+                    font-size: 1rem !important;
+                    margin-bottom: 0.5rem !important;
                 }
             }
             
@@ -339,11 +351,14 @@ app.get('/', (c) => {
                 text-align: right;
             }
             
-            /* Hebrew text left-aligned (for mixed content) */
-            .hebrew-left {
+            /* Hebrew text properly centered for buttons */
+            .hebrew-text {
                 font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;
                 direction: ltr;
-                text-align: left;
+                text-align: center;
+                font-size: 1.2rem;
+                font-weight: 600;
+                margin-top: 2px;
             }
             
             /* Interactive elements */
@@ -396,12 +411,12 @@ app.get('/', (c) => {
         </style>
     </head>
     <body class="bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div class="min-h-screen p-4">
+        <div class="min-h-screen p-2">
             <!-- Header with Logo -->
-            <div class="text-center mb-4">
+            <div class="text-center mb-2">
                 <div id="logoContainer" class="cursor-pointer inline-block">
-                    <div class="w-80 h-20 mx-auto bg-white rounded-lg shadow-lg flex items-center justify-center border-2 border-blue-200 p-3">
-                        <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600" 
+                    <div class="w-80 h-16 mx-auto bg-white rounded-lg shadow-lg flex items-center justify-center border-2 border-blue-200 p-2">
+                        <h1 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600" 
                             style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3); font-family: 'Times New Roman', serif;">
                             ✡ OHR SHALOM ✡
                         </h1>
@@ -417,7 +432,7 @@ app.get('/', (c) => {
                 <div class="landscape-left scroll-container">
 
                     <!-- Date and Calendar Information -->
-                    <div class="bg-gradient-to-br from-white to-blue-50 rounded-lg shadow-lg p-4 mb-4 interactive-hover">
+                    <div class="bg-gradient-to-br from-white to-blue-50 rounded-lg shadow-lg p-4 mb-4 interactive-hover compact-section">
                         <h3 class="text-lg font-semibold text-gray-800 mb-3">
                             <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>Today's Date
                         </h3>
@@ -454,7 +469,7 @@ app.get('/', (c) => {
                     </div>
                     
                     <!-- Prayer Times -->
-                    <div class="bg-gradient-to-br from-white to-green-50 rounded-lg shadow-lg p-4 mb-4 interactive-hover">
+                    <div class="bg-gradient-to-br from-white to-green-50 rounded-lg shadow-lg p-4 mb-4 interactive-hover compact-section">
                         <h3 class="text-lg font-semibold text-gray-800 mb-3">
                             <i class="fas fa-pray mr-2 text-green-600"></i>Daily Prayers
                         </h3>
@@ -501,7 +516,7 @@ app.get('/', (c) => {
                     </div>
                     
                     <!-- Shabbat Times -->
-                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4 compact-section">
                         <h3 class="text-lg font-semibold text-gray-800 mb-3">
                             <i class="fas fa-star-of-david mr-2"></i>Shabbat Times
                         </h3>
@@ -543,7 +558,7 @@ app.get('/', (c) => {
                     </div>
                     
                     <!-- Condensed Zmanim -->
-                    <div class="bg-white rounded-lg shadow-lg p-3 mb-4">
+                    <div class="bg-white rounded-lg shadow-lg p-3 mb-4 compact-section">
                         <h3 class="text-base font-semibold text-gray-800 mb-2">
                             <i class="fas fa-clock mr-1 text-xs"></i>Key Zmanim
                         </h3>
@@ -582,7 +597,7 @@ app.get('/', (c) => {
                 <div class="landscape-right scroll-container">
 
                     <!-- Donation Interface -->
-                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                    <div class="bg-white rounded-lg shadow-lg p-4 mb-4 compact-section">
                         <h2 class="text-xl font-bold text-center text-gray-800 mb-4">
                             <i class="fas fa-heart mr-2 text-red-500"></i>
                             Make a Donation
@@ -596,11 +611,11 @@ app.get('/', (c) => {
                             </button>
                             <button class="amount-button bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-300 interactive-hover" data-amount="18">
                                 <div class="text-2xl font-bold">$18</div>
-                                <div class="text-base hebrew-left">חי</div>
+                                <div class="hebrew-text">חי</div>
                             </button>
                             <button class="amount-button bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-all duration-300 interactive-hover" data-amount="36">
                                 <div class="text-2xl font-bold">$36</div>
-                                <div class="text-sm hebrew-left">Double חי</div>
+                                <div class="hebrew-text">Double חי</div>
                             </button>
                             <button class="amount-button bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition-all duration-300 interactive-hover" id="customAmountBtn">
                                 <div class="text-xl font-bold">Custom</div>
@@ -643,13 +658,6 @@ app.get('/', (c) => {
                                     <div>
                                         <div class="font-bold">Tap to Pay</div>
                                         <div class="text-sm">Touch your card or phone</div>
-                                    </div>
-                                </button>
-                                <button id="cardPaymentBtn" class="kiosk-button bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg transition-colors flex items-center justify-center">
-                                    <i class="fas fa-credit-card mr-2 text-xl"></i>
-                                    <div>
-                                        <div class="font-bold">Online Payment</div>
-                                        <div class="text-sm">Card details</div>
                                     </div>
                                 </button>
                             </div>
