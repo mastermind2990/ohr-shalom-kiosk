@@ -72,14 +72,16 @@
 - **Development**: https://3000-icgy6i2trcgm5190jdfl7-6532622b.e2b.dev
 - **GitHub**: https://github.com/mastermind2990/ohr-shalom-kiosk
 
-### 🎯 Recent Fixes (Aug 22, 2025)
-**CRITICAL JavaScript syntax error resolved:**
-- ✅ Fixed "Unexpected identifier 'startCardPayment'" error in processTerminalPayment function
-- ✅ Hebrew calendar now displays proper dates and times
-- ✅ Shabbat times working: Candle lighting & Havdalah displayed correctly
-- ✅ Admin panel event listeners functioning properly
+### 🎯 Recent Fixes (Aug 25, 2025)
+**ANDROID APK COMPATIBILITY ACHIEVED:**
+- ✅ Updated API endpoints to match existing Android APK (`/initiate-payment`)
+- ✅ Removed unsupported endpoint calls (`/payment/status`, `/config`)
+- ✅ Simplified payment flow for Android middleware compatibility
+- ✅ Package name verified: `com.ohrshalom.paymentmiddleware`
+- ✅ Port 8080 confirmed compatible between web app and APK
+- ✅ Hebrew calendar working: Current times, Shabbat times, Hebrew dates
 - ✅ Layout optimized for landscape tablet viewing without scrolling
-- ✅ All 5 original critical issues have been resolved
+- ✅ Hebrew "Chai" text properly formatted and centered on $18/$36 buttons
 
 ## 📊 API Architecture
 
@@ -90,24 +92,29 @@
 | `/api/hebcal` | GET | Hebrew calendar data |
 | `/api/create-payment-intent` | POST | Stripe payment creation |
 
-### Android Middleware Endpoints (localhost:8080)
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/status` | GET | Middleware health check |
-| `/payment/create` | POST | Create payment intent |
-| `/payment/confirm` | POST | Process NFC payment |
-| `/payment/status` | GET | Check payment status |
-| `/config` | POST | Configure Stripe keys |
+### Android Middleware Endpoints (localhost:8080) - ✅ COMPATIBLE
+| Endpoint | Method | Purpose | Status |
+|----------|--------|---------|--------|
+| `/status` | GET | Middleware health check | ✅ Available |
+| `/initiate-payment` | POST | Start NFC payment process | ✅ Available |
+| `/cancel-payment` | POST | Cancel ongoing payment | ✅ Available |
+
+### Android APK Details (Your Built APK)
+- **Package Name**: `com.ohrshalom.paymentmiddleware`
+- **Port**: 8080 ✅ (Matches web app expectations)
+- **NFC Integration**: Stripe Android SDK v20.37.2
+- **Auto-Start**: Boots with device via BootReceiver
+- **Compatibility**: ✅ **FULLY COMPATIBLE** with updated web app
 
 ## 🗂️ Data Flow
 
-### Payment Processing Flow
+### Payment Processing Flow (Updated for APK Compatibility)
 1. **User Selection**: Donor selects amount on web kiosk
-2. **Middleware Check**: Web app checks if Android middleware is available
-3. **Payment Creation**: Android app creates Stripe payment intent
-4. **NFC Processing**: Android app handles contactless card tap
-5. **Status Polling**: Web app polls for payment completion
-6. **Confirmation**: Success message and photo capture
+2. **Middleware Check**: Web app checks if Android middleware is available (`/status`)
+3. **Payment Initiation**: Web app calls `/initiate-payment` with amount and email
+4. **NFC Processing**: Android APK automatically handles contactless card tap
+5. **Payment Completion**: Android APK manages the entire NFC transaction
+6. **Confirmation**: Web app shows success message and captures photo
 
 ### Admin Workflow
 1. **Exit Kiosk Mode**: Admin taps logo 5 times
