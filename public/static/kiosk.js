@@ -285,7 +285,7 @@ class OhrShalomKiosk {
             
             // Step 1: Initiate payment via Android middleware
             this.showMessage('Initiating payment...', 'info')
-            const paymentResponse = await fetch('http://localhost:8080/initiate-payment', {
+            const paymentResponse = await fetch('http://localhost:8080/donation', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -299,11 +299,11 @@ class OhrShalomKiosk {
             
             if (!paymentResponse.ok) {
                 const error = await paymentResponse.json()
-                throw new Error(error.error || `Failed to initiate payment: HTTP ${paymentResponse.status}`)
+                throw new Error(error.error || `Failed to process donation: HTTP ${paymentResponse.status}`)
             }
             
-            const paymentResult = await paymentResponse.json()
-            console.log('Payment initiated:', paymentResult)
+            const donationResult = await paymentResponse.json()
+            console.log('Donation processed:', donationResult)
             
             // Android middleware handles NFC automatically after initiation
             this.showMessage(`Ready for payment: $${amountDollars} - Please tap your card or device`, 'info')
